@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {useTranslations, useLocale} from "next-intl";
 import MapPicker from "@/components/MapPicker";
 import { isValidGeorgianMobile } from "@/lib/phone";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function PhoneIcon(props) {
   return (
@@ -63,7 +65,7 @@ function HeartIcon(props) {
   );
 }
 
-function ProductCard({ product, onAdd }) {
+function ProductCard({ product, onAdd, t }) {
   const [size, setSize] = useState(product.sizes?.[0]?.sizeKg ?? 0.5);
   const selected = product.sizes.find((s) => s.sizeKg === size) || product.sizes[0];
   
@@ -130,7 +132,7 @@ function ProductCard({ product, onAdd }) {
             className="btn-primary w-full justify-center text-base font-semibold py-3 hover:scale-105 transition-transform duration-200"
           >
             <CartIcon />
-            Add to Cart — {selected.price.toFixed(0)} ₾
+            {t("common.cart")} — {selected.price.toFixed(0)} ₾
           </button>
         </div>
       </div>
@@ -139,6 +141,8 @@ function ProductCard({ product, onAdd }) {
 }
 
 export default function Home() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]); // {productId, sizeKg, quantity}
   const [firstName, setFirstName] = useState("");
@@ -192,19 +196,19 @@ export default function Home() {
   async function submitOrder() {
     setMessage(null);
     if (!firstName || !lastName) {
-      setMessage({ type: "error", text: "Enter your name and surname" });
+      setMessage({ type: "error", text: t("errors.name") });
       return;
     }
     if (!isValidGeorgianMobile(phone)) {
-      setMessage({ type: "error", text: "Enter valid Georgian mobile (+995 5XX XX XX XX)" });
+      setMessage({ type: "error", text: t("errors.phone") });
       return;
     }
     if (!addressText && !location) {
-      setMessage({ type: "error", text: "Provide address or choose on map" });
+      setMessage({ type: "error", text: t("errors.address") });
       return;
     }
     if (cart.length === 0) {
-      setMessage({ type: "error", text: "Add at least one item" });
+      setMessage({ type: "error", text: t("errors.emptyCart") });
       return;
     }
     setSubmitting(true);
@@ -216,12 +220,11 @@ export default function Home() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create order");
-      // Prepare summary for SMS API usage
       const smsText = `${firstName} ${lastName} | ${phone} | ${addressText || "map"} | ` +
         detailedCart.map((i) => `${i.name} ${i.sizeKg}kg x${i.quantity}`).join(", ") +
         ` | Total: ${total.toFixed(2)} GEL`;
       console.log("SMS Payload:", smsText);
-      setMessage({ type: "success", text: "Order placed! We'll contact you shortly." });
+      setMessage({ type: "success", text: t("success.orderPlaced") });
       setCart([]);
     } catch (e) {
       setMessage({ type: "error", text: e.message });
@@ -242,8 +245,8 @@ export default function Home() {
                 <span className="text-white font-bold text-lg">K</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg text-gray-900">Khinkalito</span>
-                <span className="text-xs text-gray-500 hidden sm:block">Authentic Georgian Cuisine</span>
+                <span className="font-bold text-lg text-gray-900">{t("common.brand")}</span>
+                <span className="text-xs text-gray-500 hidden sm:block">{t("common.tagline")}</span>
               </div>
             </div>
 
@@ -256,28 +259,31 @@ export default function Home() {
               <div className="flex items-center gap-2 text-gray-600">
                 <ClockIcon className="text-green-600" />
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">Open Daily</span>
-                  <span className="text-xs">11:00 - 23:00</span>
+                  <span className="text-sm font-medium">{t("common.openDaily")}</span>
+                  <span className="text-xs">{t("common.hours")}</span>
                 </div>
               </div>
-              <a href="/admin" className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium">
-                Admin Panel
+              <a href={`/${locale}/admin`} className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium">
+                {t("common.admin")}
               </a>
             </div>
 
-            {/* Cart Button */}
-            <button 
-              onClick={() => setCartOpen(true)} 
-              className="relative btn-primary hover:scale-105 transition-all duration-200"
-            >
-              <CartIcon />
-              <span className="hidden sm:inline">Cart</span>
-              {detailedCart.length > 0 && (
-                <span className="absolute -top-2 -right-2 h-6 w-6 bg-amber-400 text-red-800 text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                  {detailedCart.length}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              {/* Cart Button */}
+              <button 
+                onClick={() => setCartOpen(true)} 
+                className="relative btn-primary hover:scale-105 transition-all duration-200"
+              >
+                <CartIcon />
+                <span className="hidden sm:inline">{t("common.cart")}</span>
+                {detailedCart.length > 0 && (
+                  <span className="absolute -top-2 -right-2 h-6 w-6 bg-amber-400 text-red-800 text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                    {detailedCart.length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </nav>
       </header>
@@ -294,16 +300,16 @@ export default function Home() {
             <div className="mb-6">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-medium border border-red-200">
                 <LocationIcon className="w-4 h-4" />
-                Now delivering in Tbilisi
+                {t("common.nowDelivering")}
               </span>
             </div>
             
             <h1 className="text-hero gradient-text mb-6 text-balance">
-              Authentic Georgian Khinkali
+              {t("home.heroTitle")}
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Experience the true taste of Georgia with our handcrafted khinkali, made from traditional recipes passed down through generations.
+              {t("home.heroDesc")}
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 mb-10">
@@ -313,7 +319,7 @@ export default function Home() {
                 </div>
                 <div className="text-left">
                   <div className="font-bold text-gray-900 text-lg">4.9</div>
-                  <div className="text-gray-600 text-sm">Rating</div>
+                  <div className="text-gray-600 text-sm">{t("home.rating")}</div>
                 </div>
               </div>
               
@@ -333,7 +339,7 @@ export default function Home() {
                 </div>
                 <div className="text-left">
                   <div className="font-bold text-gray-900 text-lg">30-45</div>
-                  <div className="text-gray-600 text-sm">Minutes</div>
+                  <div className="text-gray-600 text-sm">{t("home.minutes")}</div>
                 </div>
               </div>
             </div>
@@ -343,7 +349,7 @@ export default function Home() {
               className="btn-primary text-lg px-8 py-4 hover:scale-105 transition-all duration-300 shadow-xl"
             >
               <CartIcon />
-              Order Now
+              {t("common.orderNow")}
             </button>
           </div>
         </div>
@@ -357,11 +363,12 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-section text-gray-900 mb-6">Traditional Georgian Cuisine</h2>
+            <h2 className="text-section text-gray-900 mb-6">{t("home.aboutTitle")}</h2>
+            <p className="text-lg text-gray-600 leading-relaxed mb-4">
+              {t("home.about1")}
+            </p>
             <p className="text-lg text-gray-600 leading-relaxed mb-8">
-              At Khinkalito, we bring you the authentic taste of Georgia through our handmade khinkali. 
-              Each dumpling is carefully crafted using traditional recipes passed down through generations, 
-              ensuring every bite delivers the genuine flavors of Georgian cuisine.
+              {t("home.about2")}
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -369,24 +376,24 @@ export default function Home() {
                 <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <HeartIcon className="w-8 h-8 text-red-600" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Made with Love</h3>
-                <p className="text-gray-600 text-sm">Every khinkali is handcrafted with care and traditional techniques</p>
+                <h3 className="font-bold text-gray-900 mb-2">{t("home.madeWithLove")}</h3>
+                <p className="text-gray-600 text-sm">{t("home.madeWithLoveDesc")}</p>
               </div>
               
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <CheckIcon className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Fresh Ingredients</h3>
-                <p className="text-gray-600 text-sm">We use only the finest, freshest ingredients sourced daily</p>
+                <h3 className="font-bold text-gray-900 mb-2">{t("home.freshIngredients")}</h3>
+                <p className="text-gray-600 text-sm">{t("home.freshIngredientsDesc")}</p>
               </div>
               
               <div className="text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <LocationIcon className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Fast Delivery</h3>
-                <p className="text-gray-600 text-sm">Quick delivery across Tbilisi in 30-45 minutes</p>
+                <h3 className="font-bold text-gray-900 mb-2">{t("home.fastDelivery")}</h3>
+                <p className="text-gray-600 text-sm">{t("home.fastDeliveryDesc")}</p>
               </div>
             </div>
           </div>
@@ -397,16 +404,16 @@ export default function Home() {
       <section id="menu" className="py-20 bg-gray-50">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-section text-gray-900 mb-4">Our Khinkali Menu</h2>
+            <h2 className="text-section text-gray-900 mb-4">{t("home.menuTitle")}</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Choose from our selection of traditional Georgian dumplings, each prepared with authentic recipes and premium ingredients
+              {t("home.menuDesc")}
             </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {products.map((p, index) => (
               <div key={p.id} style={{ animationDelay: `${index * 100}ms` }}>
-                <ProductCard product={p} onAdd={addToCart} />
+                <ProductCard product={p} onAdd={addToCart} t={t} />
               </div>
             ))}
           </div>
@@ -416,7 +423,7 @@ export default function Home() {
               <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <CartIcon className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500">Loading delicious khinkali...</p>
+              <p className="text-gray-500">{t("home.loading")}</p>
             </div>
           )}
         </div>
@@ -426,9 +433,9 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-section text-gray-900 mb-4">Complete Your Order</h2>
+            <h2 className="text-section text-gray-900 mb-4">{t("home.completeOrderTitle")}</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Fill in your details and delivery address to receive your delicious khinkali
+              {t("home.completeOrderDesc")}
             </p>
           </div>
           
@@ -440,26 +447,26 @@ export default function Home() {
                   <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                     <span className="text-red-600 font-bold text-sm">1</span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">Contact Information</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{t("home.contactInfo")}</h3>
                 </div>
                 
                 <div className="space-y-4 mb-8">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("home.firstName")}</label>
                       <input 
                         type="text"
-                        placeholder="Enter your first name" 
+                        placeholder={t("home.firstName")} 
                         value={firstName} 
                         onChange={(e) => setFirstName(e.target.value)} 
                         className="input-field"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("home.lastName")}</label>
                       <input 
                         type="text"
-                        placeholder="Enter your last name" 
+                        placeholder={t("home.lastName")} 
                         value={lastName} 
                         onChange={(e) => setLastName(e.target.value)} 
                         className="input-field"
@@ -468,7 +475,7 @@ export default function Home() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Phone</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t("home.mobilePhone")}</label>
                     <input 
                       type="tel"
                       placeholder="+995 5XX XX XX XX" 
@@ -483,14 +490,14 @@ export default function Home() {
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                     <span className="text-blue-600 font-bold text-sm">2</span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">Delivery Address</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{t("home.deliveryAddress")}</h3>
                 </div>
                 
                 <div className="space-y-4 mb-8">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address Details</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t("home.addressDetails")}</label>
                     <textarea 
-                      placeholder="Enter your full address (street, building, apartment)" 
+                      placeholder={t("home.addressPlaceholder")} 
                       value={addressText} 
                       onChange={(e) => setAddressText(e.target.value)} 
                       className="input-field resize-none h-24"
@@ -501,11 +508,11 @@ export default function Home() {
                 <div className="bg-gray-50 rounded-xl p-4 mb-6">
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                     <CheckIcon className="w-4 h-4 text-green-600" />
-                    <span>Free delivery on orders over 25 ₾</span>
+                    <span>{t("home.freeDelivery")}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <ClockIcon className="w-4 h-4 text-blue-600" />
-                    <span>Estimated delivery: 30-45 minutes</span>
+                    <span>{t("home.eta")}</span>
                   </div>
                 </div>
                 
@@ -515,7 +522,7 @@ export default function Home() {
                   className="btn-primary w-full justify-center text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all duration-200"
                 >
                   <CartIcon />
-                  {submitting ? "Placing Order..." : `Place Order • ${total.toFixed(0)} ₾`}
+                  {submitting ? t("home.placingOrder") : `${t("home.placeOrder")} • ${total.toFixed(0)} ₾`}
                 </button>
                 
                 {message && (
@@ -544,11 +551,11 @@ export default function Home() {
               <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <LocationIcon className="w-6 h-6 text-blue-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Select Location (Optional)</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{t("home.selectLocation")}</h3>
                 </div>
                 <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={400} />
                 <div className="text-sm text-gray-500 mt-3 p-3 bg-blue-50 rounded-lg">
-                  💡 Click on the map to set your exact delivery location. This helps our delivery team find you faster!
+                  💡 {t("home.mapTip")}
                 </div>
               </div>
             </div>
@@ -567,23 +574,22 @@ export default function Home() {
                   <span className="text-white font-bold text-xl">K</span>
                 </div>
                 <div>
-                  <div className="font-bold text-xl">Khinkalito</div>
-                  <div className="text-gray-400 text-sm">Authentic Georgian Cuisine</div>
+                  <div className="font-bold text-xl">{t("common.brand")}</div>
+                  <div className="text-gray-400 text-sm">{t("common.tagline")}</div>
                 </div>
               </div>
               <p className="text-gray-300 leading-relaxed mb-6 max-w-md">
-                Experience the true taste of Georgia with our handcrafted khinkali, made from traditional recipes 
-                passed down through generations. Delivered fresh to your door in Tbilisi.
+                {t("home.heroDesc")}
               </p>
               <div className="flex items-center gap-2 text-green-400">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                <span className="font-medium">Open Now • Delivering until 23:00</span>
+                <span className="font-medium">{t("common.openNow")} • {t("common.deliveringUntil")}</span>
               </div>
             </div>
             
             {/* Contact */}
             <div>
-              <h3 className="font-bold text-lg mb-4">Contact</h3>
+              <h3 className="font-bold text-lg mb-4">{t("common.contact")}</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
                   <PhoneIcon className="text-red-400" />
@@ -597,7 +603,7 @@ export default function Home() {
                   <ClockIcon className="text-green-400" />
                   <div>
                     <div>Mon - Sun</div>
-                    <div className="text-sm text-gray-400">11:00 - 23:00</div>
+                    <div className="text-sm text-gray-400">{t("common.hours")}</div>
                   </div>
                 </div>
               </div>
@@ -605,12 +611,12 @@ export default function Home() {
             
             {/* Quick Links */}
             <div>
-              <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+              <h3 className="font-bold text-lg mb-4">{t("common.quickLinks")}</h3>
               <div className="space-y-2">
-                <a href="#menu" className="block text-gray-300 hover:text-white transition-colors">Menu</a>
-                <a href="/admin" className="block text-gray-300 hover:text-white transition-colors">Admin Panel</a>
+                <a href="#menu" className="block text-gray-300 hover:text-white transition-colors">{t("common.menu")}</a>
+                <a href={`/${locale}/admin`} className="block text-gray-300 hover:text-white transition-colors">{t("common.admin")}</a>
                 <button onClick={() => setCartOpen(true)} className="block text-gray-300 hover:text-white transition-colors text-left">
-                  View Cart ({detailedCart.length})
+                  {t("common.cart")} ({detailedCart.length})
                 </button>
               </div>
             </div>
@@ -618,9 +624,9 @@ export default function Home() {
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} Khinkalito. All rights reserved. Made with{" "}
+              © {new Date().getFullYear()} {t("common.brand")}. All rights reserved. Made with{" "}
               <HeartIcon className="inline w-4 h-4 text-red-400 mx-1" />
-              in Georgia
+              {t("common.madeInGeorgia")}
             </p>
           </div>
         </div>
@@ -639,8 +645,8 @@ export default function Home() {
                     <CartIcon className="w-5 h-5 text-red-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Your Cart</h2>
-                    <p className="text-sm text-gray-500">{detailedCart.length} items</p>
+                    <h2 className="text-xl font-bold text-gray-900">{t("common.yourCart")}</h2>
+                    <p className="text-sm text-gray-500">{detailedCart.length} {t("common.items")}</p>
                   </div>
                 </div>
                 <button 
@@ -659,13 +665,13 @@ export default function Home() {
                   <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <CartIcon className="w-8 h-8 text-gray-400" />
                   </div>
-                  <h3 className="font-medium text-gray-900 mb-2">Your cart is empty</h3>
-                  <p className="text-gray-500 text-sm mb-6">Add some delicious khinkali to get started!</p>
+                  <h3 className="font-medium text-gray-900 mb-2">{t("home.cartEmpty")}</h3>
+                  <p className="text-gray-500 text-sm mb-6">{t("home.addSome")}</p>
                   <button 
                     onClick={() => setCartOpen(false)}
                     className="btn-primary"
                   >
-                    Browse Menu
+                    {t("common.browseMenu")}
                   </button>
                 </div>
               ) : (
@@ -722,16 +728,16 @@ export default function Home() {
               <div className="p-6 border-t border-gray-100 bg-gray-50">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-600">{t("common.subtotal")}</span>
                     <span className="font-medium">{total.toFixed(0)} ₾</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Delivery</span>
-                    <span className="text-green-600 font-medium">Free</span>
+                    <span className="text-gray-600">{t("common.delivery")}</span>
+                    <span className="text-green-600 font-medium">{t("common.free")}</span>
                   </div>
                   <div className="border-t border-gray-200 pt-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-gray-900">Total</span>
+                      <span className="text-lg font-bold text-gray-900">{t("common.total")}</span>
                       <span className="text-2xl font-bold text-red-600">{total.toFixed(0)} ₾</span>
                     </div>
                   </div>
@@ -744,7 +750,7 @@ export default function Home() {
                     className="btn-primary w-full justify-center text-lg py-4 hover:scale-105 transition-all duration-200"
                   >
                     <CheckIcon />
-                    Continue to Checkout
+                    {t("common.continueCheckout")}
                   </button>
                 </div>
               </div>
@@ -755,3 +761,5 @@ export default function Home() {
     </div>
   );
 }
+
+

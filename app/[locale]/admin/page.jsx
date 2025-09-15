@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {useLocale} from "next-intl";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function DashboardIcon(props) {
   return (
@@ -37,6 +39,7 @@ function ArrowLeftIcon(props) {
 }
 
 export default function AdminPage() {
+  const locale = useLocale();
   const [tab, setTab] = useState("products");
   
   return (
@@ -56,14 +59,17 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Back to Site */}
-            <a 
-              href="/" 
-              className="btn-secondary hover:scale-105 transition-all duration-200"
-            >
-              <ArrowLeftIcon />
-              <span className="hidden sm:inline">Back to Site</span>
-            </a>
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <a 
+                href={`/${locale}`} 
+                className="btn-secondary hover:scale-105 transition-all duration-200"
+              >
+                <ArrowLeftIcon />
+                <span className="hidden sm:inline">Back to Site</span>
+              </a>
+            </div>
           </div>
         </nav>
       </header>
@@ -175,7 +181,6 @@ function ProductsAdmin() {
       const result = await response.json();
       
       if (isEdit && productId) {
-        // Update existing product with new image
         const product = products.find(p => p.id === productId);
         if (product) {
           await updateProduct({ ...product, image: result.url });
@@ -197,16 +202,12 @@ function ProductsAdmin() {
     if (!product || !product.image) return;
     
     if (confirm("Are you sure you want to remove this image?")) {
-      // Extract filename from URL
       const filename = product.image.split('/').pop();
       
       try {
-        // Delete file from server
         await fetch(`/api/upload?filename=${filename}`, {
           method: "DELETE",
         });
-        
-        // Update product to remove image reference
         await updateProduct({ ...product, image: null });
       } catch (error) {
         console.error("Failed to remove image:", error);
@@ -510,7 +511,7 @@ function ProductsAdmin() {
           {products.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <PackageIcon className="w-8 h-8 text-gray-400" />
+                <ShoppingCartIcon className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="font-medium text-gray-900 mb-2">No products yet</h3>
               <p className="text-gray-500 text-sm">Create your first product to get started.</p>

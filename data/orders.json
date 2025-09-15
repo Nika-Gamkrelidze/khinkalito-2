@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "id": "f8dcb32d-a511-4b11-b5d7-c11768a9f909",
+    "createdAt": "2025-09-15T20:59:06.020Z",
+    "status": "preparing",
+    "customer": {
+      "firstName": "nika",
+      "lastName": "g",
+      "phone": "+995598247477"
+    },
+    "address": {
+      "text": "sheshelidze 116",
+      "location": null
+    },
+    "items": [
+      {
+        "productId": "a186fb9a-4d83-4836-8e73-083998ae0563",
+        "productName": "Traditional Beef & Pork Khinkali",
+        "sizeKg": 0.5,
+        "unitPrice": 14,
+        "quantity": 1,
+        "lineTotal": 14
+      }
+    ],
+    "total": 14
+  }
+]

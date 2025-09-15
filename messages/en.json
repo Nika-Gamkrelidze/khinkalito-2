@@ -1,0 +1,72 @@
+{
+	"common": {
+		"brand": "Khinkalito",
+		"tagline": "Authentic Georgian Cuisine",
+		"admin": "Admin Panel",
+		"cart": "Cart",
+		"orderNow": "Order Now",
+		"menu": "Menu",
+		"browseMenu": "Browse Menu",
+		"yourCart": "Your Cart",
+		"items": "items",
+		"subtotal": "Subtotal",
+		"delivery": "Delivery",
+		"free": "Free",
+		"total": "Total",
+		"continueCheckout": "Continue to Checkout",
+		"contact": "Contact",
+		"quickLinks": "Quick Links",
+		"madeInGeorgia": "in Georgia",
+		"openDaily": "Open Daily",
+		"hours": "11:00 - 23:00",
+		"openNow": "Open Now",
+		"deliveringUntil": "Delivering until 23:00",
+		"nowDelivering": "Now delivering in Tbilisi"
+	},
+	"home": {
+		"heroTitle": "Authentic Georgian Khinkali",
+		"heroDesc": "Experience the true taste of Georgia with our handcrafted khinkali, made from traditional recipes passed down through generations.",
+		"rating": "Rating",
+		"minutes": "Minutes",
+		"aboutTitle": "Traditional Georgian Cuisine",
+		"about1": "At Khinkalito, we bring you the authentic taste of Georgia through our handmade khinkali.",
+		"about2": "Each dumpling is carefully crafted using traditional recipes passed down through generations, ensuring every bite delivers the genuine flavors of Georgian cuisine.",
+		"madeWithLove": "Made with Love",
+		"freshIngredients": "Fresh Ingredients",
+		"fastDelivery": "Fast Delivery",
+		"madeWithLoveDesc": "Every khinkali is handcrafted with care and traditional techniques",
+		"freshIngredientsDesc": "We use only the finest, freshest ingredients sourced daily",
+		"fastDeliveryDesc": "Quick delivery across Tbilisi in 30-45 minutes",
+		"menuTitle": "Our Khinkali Menu",
+		"menuDesc": "Choose from our selection of traditional Georgian dumplings, each prepared with authentic recipes and premium ingredients",
+		"loading": "Loading delicious khinkali...",
+		"completeOrderTitle": "Complete Your Order",
+		"completeOrderDesc": "Fill in your details and delivery address to receive your delicious khinkali",
+		"contactInfo": "Contact Information",
+		"firstName": "First Name",
+		"lastName": "Last Name",
+		"mobilePhone": "Mobile Phone",
+		"deliveryAddress": "Delivery Address",
+		"addressDetails": "Address Details",
+		"addressPlaceholder": "Enter your full address (street, building, apartment)",
+		"freeDelivery": "Free delivery on orders over 25 ₾",
+		"eta": "Estimated delivery: 30-45 minutes",
+		"placeOrder": "Place Order",
+		"placingOrder": "Placing Order...",
+		"selectLocation": "Select Location (Optional)",
+		"mapTip": "Click on the map to set your exact delivery location. This helps our delivery team find you faster!",
+		"cartEmpty": "Your cart is empty",
+		"addSome": "Add some delicious khinkali to get started!"
+	},
+	"errors": {
+		"name": "Enter your name and surname",
+		"phone": "Enter valid Georgian mobile (+995 5XX XX XX XX)",
+		"address": "Provide address or choose on map",
+		"emptyCart": "Add at least one item"
+	},
+	"success": {
+		"orderPlaced": "Order placed! We'll contact you shortly."
+	}
+}
+
+
