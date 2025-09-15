@@ -3,6 +3,7 @@
     "id": "a186fb9a-4d83-4836-8e73-083998ae0563",
     "name": "Traditional Beef & Pork Khinkali",
     "description": "Classic Georgian khinkali with juicy beef-pork filling.",
+    "image": "/images/products/1757963442804_1.jpg",
     "sizes": [
       {
         "sizeKg": 0.5,
@@ -19,6 +20,7 @@
     "id": "0fc97435-c11e-4a0d-bc5c-422ee07d6949",
     "name": "Beef Khinkali",
     "description": "All-beef filling, peppered and aromatic.",
+    "image": null,
     "sizes": [
       {
         "sizeKg": 0.5,
@@ -35,6 +37,7 @@
     "id": "285da5f8-2106-4ef9-ac0e-991625296f78",
     "name": "Cheese Khinkali",
     "description": "Suluguni cheese filling, rich and creamy.",
+    "image": null,
     "sizes": [
       {
         "sizeKg": 0.5,
@@ -51,6 +54,7 @@
     "id": "a8c54c7a-dcdd-4255-be9f-657953cee6da",
     "name": "Mushroom Khinkali",
     "description": "Savory mushroom filling with herbs (vegetarian).",
+    "image": null,
     "sizes": [
       {
         "sizeKg": 0.5,

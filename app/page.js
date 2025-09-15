@@ -6,7 +6,7 @@ import { isValidGeorgianMobile } from "@/lib/phone";
 
 function PhoneIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" aria-hidden {...props}>
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
       <path d="M4 5a2 2 0 0 1 2-2h1.2a1 1 0 0 1 .96.73l1.02 3.57a1 1 0 0 1-.29.99l-1.04.96a12.5 12.5 0 0 0 5.9 5.9l.96-1.04a1 1 0 0 1 .99-.29l3.57 1.02a1 1 0 0 1 .73.96V18a2 2 0 0 1-2 2h-.5C10.49 20 4 13.51 4 5.5V5Z" fill="currentColor"/>
     </svg>
   );
@@ -14,7 +14,7 @@ function PhoneIcon(props) {
 
 function ClockIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" aria-hidden {...props}>
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
       <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-10.59V7a1 1 0 1 0-2 0v5a1 1 0 0 0 .29.71l3 3a1 1 0 1 0 1.42-1.42L13 11.41Z" fill="currentColor"/>
     </svg>
   );
@@ -22,7 +22,7 @@ function ClockIcon(props) {
 
 function StarIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden {...props}>
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden {...props}>
       <path d="M11.48 2.5a.6.6 0 0 1 1.04 0l2.47 4.73 5.24.76a.6.6 0 0 1 .33 1.02l-3.79 3.7.9 5.22a.6.6 0 0 1-.87.63L12 16.91l-4.69 2.46a.6.6 0 0 1-.87-.63l.9-5.22-3.79-3.7a.6.6 0 0 1 .33-1.02l5.24-.76 2.48-4.73Z"/>
     </svg>
   );
@@ -30,7 +30,7 @@ function StarIcon(props) {
 
 function CartIcon(props) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" aria-hidden {...props}>
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
       <path d="M3 4h1.4a1 1 0 0 1 .97.76L7 12.5a2 2 0 0 0 1.95 1.5H17a2 2 0 0 0 1.94-1.49l1.34-5.02A1 1 0 0 0 19.34 6H6.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
       <circle cx="17" cy="20" r="1.5" fill="currentColor"/>
@@ -38,29 +38,99 @@ function CartIcon(props) {
   );
 }
 
+function LocationIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function CheckIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  );
+}
+
+function HeartIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden {...props}>
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+  );
+}
+
 function ProductCard({ product, onAdd }) {
   const [size, setSize] = useState(product.sizes?.[0]?.sizeKg ?? 0.5);
   const selected = product.sizes.find((s) => s.sizeKg === size) || product.sizes[0];
+  
   return (
-    <div className="rounded-2xl overflow-hidden border border-black/10 bg-white flex flex-col">
-      <div className="h-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-200 via-amber-100 to-white" />
-      <div className="p-5 flex-1 flex flex-col gap-3">
-        <div className="text-lg font-semibold leading-tight">{product.name}</div>
-        <div className="text-sm text-black/60 line-clamp-2">{product.description}</div>
-        <div className="flex items-center gap-2 mt-1">
-          {product.sizes.map((s) => (
-            <button
-              key={s.sizeKg}
-              onClick={() => setSize(s.sizeKg)}
-              className={`px-3 py-1 rounded-full border text-sm ${size === s.sizeKg ? "bg-black text-white border-black" : "hover:bg-black/5"}`}
-            >
-              {s.sizeKg === 0.5 ? "Small" : "Large"} · {s.sizeKg}kg · {s.price.toFixed(0)} ₾
-            </button>
-          ))}
+    <div className="card animate-fade-in group">
+      <div className="relative h-48 bg-gradient-to-br from-red-50 via-amber-50 to-orange-50 overflow-hidden">
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=400&auto=format&fit=crop')] bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+        <div className="absolute top-3 right-3">
+          <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md">
+            <HeartIcon className="text-red-400" />
+          </div>
         </div>
-        <div className="mt-auto">
-          <button onClick={() => onAdd(product.id, selected.sizeKg)} className="w-full justify-center inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">
-            <CartIcon /> Add to Cart — {selected.price.toFixed(0)} ₾
+        <div className="absolute bottom-3 left-3 right-3">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <StarIcon className="text-amber-500" />
+              <span className="font-medium">4.8</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-600">30-45 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-6 flex-1 flex flex-col gap-4">
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 leading-tight mb-2">{product.name}</h3>
+          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{product.description}</p>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-700">Size Options:</div>
+          <div className="flex gap-2">
+            {product.sizes.map((s) => (
+              <button
+                key={s.sizeKg}
+                onClick={() => setSize(s.sizeKg)}
+                className={`flex-1 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                  size === s.sizeKg 
+                    ? "bg-red-600 text-white border-red-600 shadow-md transform scale-105" 
+                    : "bg-white text-gray-700 border-gray-200 hover:border-red-300 hover:bg-red-50"
+                }`}
+              >
+                <div className="text-xs opacity-80">{s.sizeKg === 0.5 ? "Small" : "Large"}</div>
+                <div className="font-semibold">{s.sizeKg}kg</div>
+                <div className="text-xs">{s.price.toFixed(0)} ₾</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-auto pt-2">
+          <button 
+            onClick={() => onAdd(product.id, selected.sizeKg)} 
+            className="btn-primary w-full justify-center text-base font-semibold py-3 hover:scale-105 transition-transform duration-200"
+          >
+            <CartIcon />
+            Add to Cart — {selected.price.toFixed(0)} ₾
           </button>
         </div>
       </div>
@@ -161,147 +231,527 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-50 via-white to-amber-50">
-      <div className="sticky top-0 z-30 border-b backdrop-blur bg-white/80">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-rose-600" />
-            <div className="font-semibold">Khinkalito</div>
-          </div>
-          <div className="hidden md:flex items-center gap-6 text-sm text-black/70">
-            <div className="flex items-center gap-2"><PhoneIcon /> +995 555 123 456</div>
-            <div className="flex items-center gap-2"><ClockIcon /> Open Daily 11:00 - 23:00</div>
-            <a href="/admin" className="underline">Admin</a>
-          </div>
-          <button onClick={() => setCartOpen(true)} className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
-            <CartIcon /> Cart
-            {detailedCart.length > 0 ? (
-              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white text-rose-700 text-xs font-semibold">{detailedCart.length}</span>
-            ) : null}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+      {/* Modern Navigation Header */}
+      <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm">
+        <nav className="container mx-auto">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">K</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg text-gray-900">Khinkalito</span>
+                <span className="text-xs text-gray-500 hidden sm:block">Authentic Georgian Cuisine</span>
+              </div>
+            </div>
 
-      <section className="relative">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-black">Authentic Georgian Khinkali</h1>
-            <p className="mt-4 text-lg text-black/70">Handmade dumplings delivered fresh to your door</p>
-            <div className="mt-6 flex flex-wrap gap-4 text-sm">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border"><StarIcon className="text-amber-500"/> 4.9 Rating</span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border">500+ Happy Customers</span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border">30-45 min Delivery</span>
+            {/* Contact Info - Hidden on mobile */}
+            <div className="hidden lg:flex items-center gap-8">
+              <div className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                <PhoneIcon className="text-red-600" />
+                <span className="font-medium">+995 555 123 456</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <ClockIcon className="text-green-600" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Open Daily</span>
+                  <span className="text-xs">11:00 - 23:00</span>
+                </div>
+              </div>
+              <a href="/admin" className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium">
+                Admin Panel
+              </a>
+            </div>
+
+            {/* Cart Button */}
+            <button 
+              onClick={() => setCartOpen(true)} 
+              className="relative btn-primary hover:scale-105 transition-all duration-200"
+            >
+              <CartIcon />
+              <span className="hidden sm:inline">Cart</span>
+              {detailedCart.length > 0 && (
+                <span className="absolute -top-2 -right-2 h-6 w-6 bg-amber-400 text-red-800 text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                  {detailedCart.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-amber-600/20" />
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
+        </div>
+        
+        <div className="relative container mx-auto py-20 lg:py-28">
+          <div className="max-w-4xl mx-auto text-center animate-fade-in">
+            <div className="mb-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-medium border border-red-200">
+                <LocationIcon className="w-4 h-4" />
+                Now delivering in Tbilisi
+              </span>
+            </div>
+            
+            <h1 className="text-hero gradient-text mb-6 text-balance">
+              Authentic Georgian Khinkali
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Experience the true taste of Georgia with our handcrafted khinkali, made from traditional recipes passed down through generations.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-6 mb-10">
+              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <StarIcon className="text-amber-600 w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-gray-900 text-lg">4.9</div>
+                  <div className="text-gray-600 text-sm">Rating</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <CheckIcon className="text-green-600 w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-gray-900 text-lg">500+</div>
+                  <div className="text-gray-600 text-sm">Happy Customers</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <ClockIcon className="text-blue-600 w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-gray-900 text-lg">30-45</div>
+                  <div className="text-gray-600 text-sm">Minutes</div>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => document.getElementById('menu').scrollIntoView({ behavior: 'smooth' })}
+              className="btn-primary text-lg px-8 py-4 hover:scale-105 transition-all duration-300 shadow-xl"
+            >
+              <CartIcon />
+              Order Now
+            </button>
+          </div>
+        </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-red-200 rounded-full opacity-20 animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-amber-200 rounded-full opacity-20 animate-pulse" />
+      </section>
+
+      {/* About Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-section text-gray-900 mb-6">Traditional Georgian Cuisine</h2>
+            <p className="text-lg text-gray-600 leading-relaxed mb-8">
+              At Khinkalito, we bring you the authentic taste of Georgia through our handmade khinkali. 
+              Each dumpling is carefully crafted using traditional recipes passed down through generations, 
+              ensuring every bite delivers the genuine flavors of Georgian cuisine.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <HeartIcon className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Made with Love</h3>
+                <p className="text-gray-600 text-sm">Every khinkali is handcrafted with care and traditional techniques</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <CheckIcon className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Fresh Ingredients</h3>
+                <p className="text-gray-600 text-sm">We use only the finest, freshest ingredients sourced daily</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <LocationIcon className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Fast Delivery</h3>
+                <p className="text-gray-600 text-sm">Quick delivery across Tbilisi in 30-45 minutes</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold">Traditional Georgian Cuisine</h2>
-          <p className="mt-3 text-black/70">At Khinkalito, we bring you the authentic taste of Georgia through our handmade khinkali. Each dumpling is carefully crafted using traditional recipes passed down through generations.</p>
-          <div className="mt-3 text-sm text-black/60">Delivering across Tbilisi</div>
+      {/* Menu Section */}
+      <section id="menu" className="py-20 bg-gray-50">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-section text-gray-900 mb-4">Our Khinkali Menu</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Choose from our selection of traditional Georgian dumplings, each prepared with authentic recipes and premium ingredients
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {products.map((p, index) => (
+              <div key={p.id} style={{ animationDelay: `${index * 100}ms` }}>
+                <ProductCard product={p} onAdd={addToCart} />
+              </div>
+            ))}
+          </div>
+          
+          {products.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <CartIcon className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500">Loading delicious khinkali...</p>
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-6">
-        <h3 className="text-2xl font-bold text-center">Our Khinkali Menu</h3>
-        <p className="text-center text-black/70 mt-1">Choose from our selection of traditional Georgian dumplings</p>
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} onAdd={addToCart} />
-          ))}
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="rounded-2xl border bg-white p-5 md:p-6 flex flex-col gap-4">
-            <h4 className="text-lg font-semibold">Contact</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="border rounded-lg px-3 py-2" />
-              <input placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="border rounded-lg px-3 py-2" />
-            </div>
-            <input placeholder="Mobile (+995 5XX XX XX XX)" value={phone} onChange={(e) => setPhone(e.target.value)} className="border rounded-lg px-3 py-2" />
-            <h4 className="text-lg font-semibold mt-2">Address</h4>
-            <textarea placeholder="Enter address details" value={addressText} onChange={(e) => setAddressText(e.target.value)} className="border rounded-lg px-3 py-2 min-h-[90px]" />
-            <div className="flex justify-end mt-1">
-              <button disabled={submitting} onClick={submitOrder} className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
-                <CartIcon /> {submitting ? "Placing..." : "Place Order"}
-              </button>
-            </div>
-            {message ? (
-              <div className={`p-3 rounded-lg ${message.type === "error" ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>{message.text}</div>
-            ) : null}
+      {/* Order Form Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-section text-gray-900 mb-4">Complete Your Order</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Fill in your details and delivery address to receive your delicious khinkali
+            </p>
           </div>
-          <div className="rounded-2xl border bg-white p-2">
-            <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={360} />
-            <div className="text-xs text-black/60 mt-2 px-2">Click on the map to set delivery location (optional if address text provided).</div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t bg-white/70">
-        <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
-          <div>
-            <div className="font-semibold">Khinkalito</div>
-            <p className="text-black/70 mt-2">Authentic Georgian khinkali delivered fresh to your door.</p>
-            <p className="text-black/60 mt-1">Traditional recipes, modern convenience.</p>
-          </div>
-          <div>
-            <div className="font-semibold">Contact</div>
-            <div className="mt-2 flex items-center gap-2 text-black/70"><PhoneIcon /> +995 555 123 456</div>
-            <div className="mt-1 text-black/60">Tbilisi, Georgia</div>
-          </div>
-          <div>
-            <div className="font-semibold">Hours</div>
-            <div className="mt-2 text-black/70">Monday - Sunday</div>
-            <div className="text-black/70">11:00 AM - 11:00 PM</div>
-            <div className="text-green-600 font-medium mt-1">Open Now</div>
-          </div>
-        </div>
-        <div className="text-center text-xs text-black/50 pb-6">© {new Date().getFullYear()} Khinkalito. All rights reserved.</div>
-      </footer>
-
-      {/* Cart Drawer */}
-      {cartOpen ? (
-        <div className="fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCartOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <div className="font-semibold">Your Cart</div>
-              <button className="text-sm" onClick={() => setCartOpen(false)}>Close</button>
-            </div>
-            <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
-              {detailedCart.length === 0 ? (
-                <div className="text-sm text-black/60">Your cart is empty.</div>
-              ) : (
-                detailedCart.map((i) => (
-                  <div key={`${i.productId}-${i.sizeKg}`} className="flex items-center justify-between gap-3 border rounded-lg p-3">
-                    <div className="flex-1">
-                      <div className="font-medium">{i.name}</div>
-                      <div className="text-xs text-black/60">{i.sizeKg} kg · {i.unitPrice.toFixed(2)} ₾</div>
+          
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Order Form */}
+            <div className="card card-elevated animate-fade-in">
+              <div className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span className="text-red-600 font-bold text-sm">1</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Contact Information</h3>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                      <input 
+                        type="text"
+                        placeholder="Enter your first name" 
+                        value={firstName} 
+                        onChange={(e) => setFirstName(e.target.value)} 
+                        className="input-field"
+                      />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input type="number" min="1" value={i.quantity} onChange={(e) => changeQty(i.productId, i.sizeKg, Number(e.target.value))} className="w-16 border rounded px-2 py-1" />
-                      <div className="w-24 text-right">{i.lineTotal.toFixed(2)} ₾</div>
-                      <button onClick={() => removeLine(i.productId, i.sizeKg)} className="text-sm text-red-600">Remove</button>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                      <input 
+                        type="text"
+                        placeholder="Enter your last name" 
+                        value={lastName} 
+                        onChange={(e) => setLastName(e.target.value)} 
+                        className="input-field"
+                      />
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-            <div className="p-4 border-t">
-              <div className="flex items-center justify-between mb-3">
-                <div className="font-semibold">Total</div>
-                <div className="font-semibold">{total.toFixed(2)} ₾</div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Phone</label>
+                    <input 
+                      type="tel"
+                      placeholder="+995 5XX XX XX XX" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)} 
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-600 font-bold text-sm">2</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Delivery Address</h3>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Address Details</label>
+                    <textarea 
+                      placeholder="Enter your full address (street, building, apartment)" 
+                      value={addressText} 
+                      onChange={(e) => setAddressText(e.target.value)} 
+                      className="input-field resize-none h-24"
+                    />
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <CheckIcon className="w-4 h-4 text-green-600" />
+                    <span>Free delivery on orders over 25 ₾</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <ClockIcon className="w-4 h-4 text-blue-600" />
+                    <span>Estimated delivery: 30-45 minutes</span>
+                  </div>
+                </div>
+                
+                <button 
+                  disabled={submitting || cart.length === 0} 
+                  onClick={submitOrder} 
+                  className="btn-primary w-full justify-center text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all duration-200"
+                >
+                  <CartIcon />
+                  {submitting ? "Placing Order..." : `Place Order • ${total.toFixed(0)} ₾`}
+                </button>
+                
+                {message && (
+                  <div className={`mt-4 p-4 rounded-xl ${
+                    message.type === "error" 
+                      ? "bg-red-50 text-red-700 border border-red-200" 
+                      : "bg-green-50 text-green-700 border border-green-200"
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {message.type === "error" ? (
+                        <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                          <span className="text-red-600 text-xs font-bold">!</span>
+                        </div>
+                      ) : (
+                        <CheckIcon className="w-5 h-5 text-green-600" />
+                      )}
+                      <span className="font-medium">{message.text}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button onClick={() => setCartOpen(false)} className="w-full px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Continue to details</button>
+            </div>
+            
+            {/* Map */}
+            <div className="card animate-fade-in">
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <LocationIcon className="w-6 h-6 text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Select Location (Optional)</h3>
+                </div>
+                <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={400} />
+                <div className="text-sm text-gray-500 mt-3 p-3 bg-blue-50 rounded-lg">
+                  💡 Click on the map to set your exact delivery location. This helps our delivery team find you faster!
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      ) : null}
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white">
+        <div className="container mx-auto py-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">K</span>
+                </div>
+                <div>
+                  <div className="font-bold text-xl">Khinkalito</div>
+                  <div className="text-gray-400 text-sm">Authentic Georgian Cuisine</div>
+                </div>
+              </div>
+              <p className="text-gray-300 leading-relaxed mb-6 max-w-md">
+                Experience the true taste of Georgia with our handcrafted khinkali, made from traditional recipes 
+                passed down through generations. Delivered fresh to your door in Tbilisi.
+              </p>
+              <div className="flex items-center gap-2 text-green-400">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                <span className="font-medium">Open Now • Delivering until 23:00</span>
+              </div>
+            </div>
+            
+            {/* Contact */}
+            <div>
+              <h3 className="font-bold text-lg mb-4">Contact</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
+                  <PhoneIcon className="text-red-400" />
+                  <span>+995 555 123 456</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <LocationIcon className="text-blue-400" />
+                  <span>Tbilisi, Georgia</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <ClockIcon className="text-green-400" />
+                  <div>
+                    <div>Mon - Sun</div>
+                    <div className="text-sm text-gray-400">11:00 - 23:00</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Quick Links */}
+            <div>
+              <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+              <div className="space-y-2">
+                <a href="#menu" className="block text-gray-300 hover:text-white transition-colors">Menu</a>
+                <a href="/admin" className="block text-gray-300 hover:text-white transition-colors">Admin Panel</a>
+                <button onClick={() => setCartOpen(true)} className="block text-gray-300 hover:text-white transition-colors text-left">
+                  View Cart ({detailedCart.length})
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © {new Date().getFullYear()} Khinkalito. All rights reserved. Made with{" "}
+              <HeartIcon className="inline w-4 h-4 text-red-400 mx-1" />
+              in Georgia
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modern Cart Drawer */}
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 animate-fade-in">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCartOpen(false)} />
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-2xl flex flex-col animate-slide-in">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                    <CartIcon className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Your Cart</h2>
+                    <p className="text-sm text-gray-500">{detailedCart.length} items</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setCartOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                >
+                  <span className="text-gray-600 text-lg">×</span>
+                </button>
+              </div>
+            </div>
+            
+            {/* Cart Items */}
+            <div className="flex-1 overflow-auto p-6">
+              {detailedCart.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <CartIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                  <p className="text-gray-500 text-sm mb-6">Add some delicious khinkali to get started!</p>
+                  <button 
+                    onClick={() => setCartOpen(false)}
+                    className="btn-primary"
+                  >
+                    Browse Menu
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {detailedCart.map((item) => (
+                    <div key={`${item.productId}-${item.sizeKg}`} className="card p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-red-50 to-amber-50 rounded-xl flex items-center justify-center">
+                          <span className="text-2xl">🥟</span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">{item.name}</h3>
+                          <p className="text-sm text-gray-500">{item.sizeKg}kg • {item.unitPrice.toFixed(0)} ₾ each</p>
+                          
+                          <div className="flex items-center gap-3 mt-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => changeQty(item.productId, item.sizeKg, Math.max(1, item.quantity - 1))}
+                                className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                              >
+                                <span className="text-gray-600">−</span>
+                              </button>
+                              <span className="w-8 text-center font-medium">{item.quantity}</span>
+                              <button
+                                onClick={() => changeQty(item.productId, item.sizeKg, item.quantity + 1)}
+                                className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                              >
+                                <span className="text-gray-600">+</span>
+                              </button>
+                            </div>
+                            
+                            <div className="flex-1 text-right">
+                              <div className="font-bold text-gray-900">{item.lineTotal.toFixed(0)} ₾</div>
+                            </div>
+                            
+                            <button
+                              onClick={() => removeLine(item.productId, item.sizeKg)}
+                              className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors text-red-600"
+                            >
+                              <span className="text-sm">×</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Footer */}
+            {detailedCart.length > 0 && (
+              <div className="p-6 border-t border-gray-100 bg-gray-50">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">{total.toFixed(0)} ₾</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Delivery</span>
+                    <span className="text-green-600 font-medium">Free</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-gray-900">Total</span>
+                      <span className="text-2xl font-bold text-red-600">{total.toFixed(0)} ₾</span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => {
+                      setCartOpen(false);
+                      document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }}
+                    className="btn-primary w-full justify-center text-lg py-4 hover:scale-105 transition-all duration-200"
+                  >
+                    <CheckIcon />
+                    Continue to Checkout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

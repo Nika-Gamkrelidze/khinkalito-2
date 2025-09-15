@@ -14,6 +14,7 @@ export async function POST(request) {
     id: crypto.randomUUID(),
     name: body.name?.toString() || "Untitled",
     description: body.description?.toString() || "",
+    image: body.image || null,
     sizes: Array.isArray(body.sizes) ? body.sizes : [],
     active: body.active !== false
   };
