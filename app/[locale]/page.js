@@ -99,15 +99,11 @@ function ProductCard({ product, onAdd, t }) {
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=400&auto=format&fit=crop')] bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-300" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        <div className="absolute top-3 right-3">
-          <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md">
-            <HeartIcon className="text-red-400" />
-          </div>
-        </div>
+        {/* Removed wishlist heart icon */}
         <div className="absolute bottom-3 left-3 right-3">
           <div className="bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-lg">
             <div className="flex items-center gap-2 text-sm">
-              <StarIcon className="text-amber-500" />
+              {/* Removed star icon */}
               <span className="font-medium">4.8</span>
               <span className="text-gray-500">•</span>
               <span className="text-gray-600">30-45 min</span>
@@ -251,9 +247,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50 pt-2">
       {/* Modern Navigation Header */}
-      <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm">
+      <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm py-2">
         <nav className="container mx-auto">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -306,7 +302,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden py-6">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-amber-600/20" />
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
@@ -581,7 +577,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white">
+      <footer className="bg-gray-900 text-white pt-12 pb-16">
         <div className="container mx-auto py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Brand */}

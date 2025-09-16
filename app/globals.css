@@ -273,14 +273,24 @@ select:focus {
 .text-hero {
   font-size: 2.25rem;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.2; /* prevent clipping of Georgian descenders */
   letter-spacing: -0.025em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 @media (min-width: 768px) {
   .text-hero {
     font-size: 3.75rem;
   }
+}
+
+/* Keep Leaflet map beneath sticky header and drawers */
+.leaflet-container,
+.leaflet-container .leaflet-pane,
+.leaflet-container .leaflet-top,
+.leaflet-container .leaflet-bottom {
+  z-index: 0 !important;
 }
 
 .text-section {
