@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import { GoogleMap, MarkerF, CircleF, useJsApiLoader } from "@react-google-maps/api";
 
 export default function MapPicker({ value, onChange, onAddress, height = 320 }) {
   const defaultCenter = useMemo(() => ({ lat: 41.7151, lng: 44.8271 }), []); // Tbilisi
@@ -11,6 +11,9 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
   }), [value, defaultCenter]);
   const [isLocating, setIsLocating] = useState(false);
   const [map, setMap] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
+  const watchIdRef = useRef(null);
+  const watchUpdatesRef = useRef(0);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -55,26 +58,48 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
     }
     const next = { lat, lng };
     onChange?.(next);
+    // Clear previous accuracy if user manually chose a point
+    if (!Array.isArray(event)) setAccuracy(null);
     reverseGeocode(lat, lng);
   }, [onChange, reverseGeocode]);
+
+  function stopWatching() {
+    if (watchIdRef.current != null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    watchUpdatesRef.current = 0;
+  }
+
+  useEffect(() => () => stopWatching(), []);
 
   function locateUser() {
     if (!navigator?.geolocation) return;
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
+    stopWatching();
+    const desiredAccuracyMeters = 60;
+    const maxUpdates = 5;
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
+        watchUpdatesRef.current += 1;
+        const { latitude, longitude, accuracy: acc } = pos.coords;
+        setAccuracy(acc ?? null);
         handleClick([latitude, longitude]);
         if (map) {
           map.panTo({ lat: latitude, lng: longitude });
-          map.setZoom(15);
+          if (acc && acc < 120) map.setZoom(16);
+          if (acc && acc < 60) map.setZoom(17);
         }
-        setIsLocating(false);
+        if ((acc && acc <= desiredAccuracyMeters) || watchUpdatesRef.current >= maxUpdates) {
+          stopWatching();
+          setIsLocating(false);
+        }
       },
       () => {
+        stopWatching();
         setIsLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   }
 
@@ -106,6 +131,19 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
         >
           {value?.lat && value?.lng ? (
             <MarkerF position={{ lat: value.lat, lng: value.lng }} />
+          ) : null}
+          {value?.lat && value?.lng && accuracy ? (
+            <CircleF
+              center={{ lat: value.lat, lng: value.lng }}
+              radius={Math.max(accuracy, 15)}
+              options={{
+                fillColor: "#3b82f6",
+                fillOpacity: 0.15,
+                strokeColor: "#3b82f6",
+                strokeOpacity: 0.6,
+                strokeWeight: 1
+              }}
+            />
           ) : null}
         </GoogleMap>
       ) : (
