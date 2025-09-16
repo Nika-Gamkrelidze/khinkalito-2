@@ -273,10 +273,11 @@ select:focus {
 .text-hero {
   font-size: 2.25rem;
   font-weight: 800;
-  line-height: 1.2; /* prevent clipping of Georgian descenders */
+  line-height: 1.35; /* extra room for Georgian descenders */
   letter-spacing: -0.025em;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1;
+  padding-bottom: 0.05em; /* tiny cushion for glyph tails */
 }
 
 @media (min-width: 768px) {
