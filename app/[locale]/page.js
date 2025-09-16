@@ -434,7 +434,7 @@ export default function Home() {
       </section>
 
       {/* Order Form Section */}
-      <section className="py-20 bg-white">
+      <section id="checkout" className="py-20 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-section text-gray-900 mb-4">{t("home.completeOrderTitle")}</h2>
@@ -749,7 +749,9 @@ export default function Home() {
                   <button 
                     onClick={() => {
                       setCartOpen(false);
-                      document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                      setTimeout(() => {
+                        document.getElementById('checkout')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
                     }}
                     className="btn-primary w-full justify-center text-lg py-4 hover:scale-105 transition-all duration-200"
                   >

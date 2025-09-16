@@ -892,6 +892,12 @@ function SettingsAdmin() {
                 <h3 className="font-semibold text-gray-900">Footer (KA)</h3>
                 <label className="block text-sm font-medium text-gray-700">სამუშაო დღეები</label>
                 <input className="input-field" value={settings.workingDays?.ka || ""} onChange={(e) => setSettings({ ...settings, workingDays: { ...(settings.workingDays||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">მისამართი</label>
+                <input className="input-field" value={settings.address || ""} onChange={(e) => setSettings({ ...settings, address: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700">ტელეფონი</label>
+                <input className="input-field" value={settings.phone || ""} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700">სამუშაო საათები</label>
+                <input className="input-field" value={settings.hours || ""} onChange={(e) => setSettings({ ...settings, hours: e.target.value })} />
               </div>
             </div>
           </div>
