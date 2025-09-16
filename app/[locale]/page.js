@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {useTranslations, useLocale} from "next-intl";
 import MapPicker from "@/components/MapPicker";
 import { isValidGeorgianMobile, formatGeorgianMobileInput } from "@/lib/phone";
@@ -153,16 +153,57 @@ export default function Home() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [addressText, setAddressText] = useState("");
+  const [lastAddressUpdateFromMap, setLastAddressUpdateFromMap] = useState(false);
   const [settings, setSettings] = useState(null);
   const [location, setLocation] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const geocodeTimeoutRef = useRef(null);
+  const geocodeSeqRef = useRef(0);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/settings").then((r) => r.json()).then(setSettings);
   }, []);
+
+  // Debounced geocoding of typed address -> update map pin
+  useEffect(() => {
+    if (!addressText || lastAddressUpdateFromMap) return;
+    if (geocodeTimeoutRef.current) clearTimeout(geocodeTimeoutRef.current);
+    const currentSeq = ++geocodeSeqRef.current;
+    const timerId = setTimeout(async () => {
+      try {
+        const text = addressText.trim();
+        if (!text) return;
+        if (window?.google?.maps) {
+          const geocoder = new window.google.maps.Geocoder();
+          const result = await geocoder.geocode({ address: text, componentRestrictions: { country: "GE" } });
+          const first = result?.results?.[0];
+          const loc = first?.geometry?.location;
+          if (loc) {
+            if (currentSeq === geocodeSeqRef.current) {
+              const next = { lat: typeof loc.lat === 'function' ? loc.lat() : loc.lat, lng: typeof loc.lng === 'function' ? loc.lng() : loc.lng };
+              setLocation(next);
+            }
+            return;
+          }
+        }
+        // Fallback to Nominatim forward geocoding
+        const q = encodeURIComponent(addressText);
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=ge&q=${q}&limit=1`);
+        const arr = await r.json();
+        const first = Array.isArray(arr) ? arr[0] : null;
+        if (first?.lat && first?.lon && currentSeq === geocodeSeqRef.current) {
+          setLocation({ lat: parseFloat(first.lat), lng: parseFloat(first.lon) });
+        }
+      } catch (_) {
+        // ignore
+      }
+    }, 1200);
+    geocodeTimeoutRef.current = timerId;
+    return () => clearTimeout(timerId);
+  }, [addressText, lastAddressUpdateFromMap]);
 
   function addToCart(productId, sizeKg) {
     setCart((prev) => {
@@ -501,7 +542,10 @@ export default function Home() {
                     <textarea 
                       placeholder={t("home.addressPlaceholder")} 
                       value={addressText} 
-                      onChange={(e) => setAddressText(e.target.value)} 
+                      onChange={(e) => {
+                        setLastAddressUpdateFromMap(false);
+                        setAddressText(e.target.value);
+                      }} 
                       className="input-field resize-none h-24"
                     />
                   </div>
@@ -555,7 +599,15 @@ export default function Home() {
                   <LocationIcon className="w-6 h-6 text-blue-600" />
                   <h3 className="text-base md:text-lg font-bold text-gray-900">{t("home.selectLocation")}</h3>
                 </div>
-                <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={320} />
+                <MapPicker 
+                  value={location} 
+                  onChange={setLocation} 
+                  onAddress={(text) => {
+                    setLastAddressUpdateFromMap(true);
+                    setAddressText(text);
+                  }} 
+                  height={320} 
+                />
                 <div className="text-sm text-gray-500 mt-3 p-3 bg-blue-50 rounded-lg">
                   💡 {t("home.mapTip")}
                 </div>

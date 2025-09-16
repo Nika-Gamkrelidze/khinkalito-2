@@ -14,6 +14,7 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
   const [accuracy, setAccuracy] = useState(null);
   const watchIdRef = useRef(null);
   const watchUpdatesRef = useRef(0);
+  const locateTimeoutRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -60,6 +61,9 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
     onChange?.(next);
     // Clear previous accuracy if user manually chose a point
     if (!Array.isArray(event)) setAccuracy(null);
+    if (map) {
+      map.panTo({ lat, lng });
+    }
     reverseGeocode(lat, lng);
   }, [onChange, reverseGeocode]);
 
@@ -69,6 +73,10 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
       watchIdRef.current = null;
     }
     watchUpdatesRef.current = 0;
+    if (locateTimeoutRef.current != null) {
+      clearTimeout(locateTimeoutRef.current);
+      locateTimeoutRef.current = null;
+    }
   }
 
   useEffect(() => () => stopWatching(), []);
@@ -77,8 +85,13 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
     if (!navigator?.geolocation) return;
     setIsLocating(true);
     stopWatching();
-    const desiredAccuracyMeters = 60;
-    const maxUpdates = 5;
+    const desiredAccuracyMeters = 25;
+    const maxUpdates = 8;
+    // Hard timeout to prevent endless locating state
+    locateTimeoutRef.current = setTimeout(() => {
+      stopWatching();
+      setIsLocating(false);
+    }, 12000);
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         watchUpdatesRef.current += 1;
@@ -126,7 +139,8 @@ export default function MapPicker({ value, onChange, onAddress, height = 320 }) 
             streetViewControl: false,
             fullscreenControl: false,
             mapTypeControl: false,
-            clickableIcons: false
+            clickableIcons: false,
+            gestureHandling: "greedy"
           }}
         >
           {value?.lat && value?.lng ? (
