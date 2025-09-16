@@ -65,7 +65,24 @@ function HeartIcon(props) {
   );
 }
 
+function getProductName(product, locale) {
+  const n = product?.name;
+  if (n && typeof n === "object") {
+    return n[locale] || n.en || n.ka || "";
+  }
+  return n || "";
+}
+
+function getProductDescription(product, locale) {
+  const d = product?.description;
+  if (d && typeof d === "object") {
+    return d[locale] || d.en || d.ka || "";
+  }
+  return d || "";
+}
+
 function ProductCard({ product, onAdd, t }) {
+  const locale = useLocale();
   const [size, setSize] = useState(product.sizes?.[0]?.sizeKg ?? 0.5);
   const selected = product.sizes.find((s) => s.sizeKg === size) || product.sizes[0];
   
@@ -75,7 +92,7 @@ function ProductCard({ product, onAdd, t }) {
         {product.image ? (
           <img 
             src={product.image} 
-            alt={product.name}
+            alt={getProductName(product, locale)}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -101,8 +118,8 @@ function ProductCard({ product, onAdd, t }) {
       
       <div className="p-6 flex-1 flex flex-col gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 leading-tight mb-2">{product.name}</h3>
-          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{product.description}</p>
+          <h3 className="text-xl font-bold text-gray-900 leading-tight mb-2">{getProductName(product, locale)}</h3>
+          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{getProductDescription(product, locale)}</p>
         </div>
         
         <div className="space-y-3">
@@ -184,7 +201,7 @@ export default function Home() {
       const s = p?.sizes.find((z) => z.sizeKg === line.sizeKg);
       return {
         ...line,
-        name: p?.name || "",
+        name: p ? getProductName(p, locale) : "",
         unitPrice: s?.price || 0,
         lineTotal: (s?.price || 0) * line.quantity
       };

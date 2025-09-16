@@ -66,6 +66,74 @@
 	},
 	"success": {
 		"orderPlaced": "Order placed! We'll contact you shortly."
+	},
+	"admin": {
+		"title": "Khinkalito Admin",
+		"subtitle": "Management Dashboard",
+		"back": "Back to Site",
+		"tabs": {
+			"products": "Products",
+			"orders": "Orders"
+		},
+		"create": {
+			"title": "Create New Product",
+			"nameEn": "Product Name (English)",
+			"nameKa": "Product Name (Georgian)",
+			"description": "Description",
+			"descriptionEn": "Description (English)",
+			"descriptionKa": "Description (Georgian)",
+			"image": "Product Image",
+			"clickToUpload": "Click to upload",
+			"orDragDrop": "or drag and drop",
+			"pngInfo": "PNG, JPG, WebP up to 5MB",
+			"uploading": "Uploading image...",
+			"sizePricing": "Size Options & Pricing",
+			"size": "Size:",
+			"price": "Price:",
+			"activeLabel": "Product is active and available for ordering",
+			"create": "Create Product",
+			"creating": "Creating Product...",
+			"open": "Add New Product",
+			"hide": "Hide Create"
+		},
+		"list": {
+			"title": "Existing Products",
+			"countLabel": "products",
+			"emptyTitle": "No products yet",
+			"emptyDesc": "Create your first product to get started."
+		},
+		"product": {
+			"active": "Active",
+			"inactive": "Inactive",
+			"addImage": "Add product image",
+			"pricing": "Pricing:",
+			"delete": "Delete Product",
+			"save": "Save Changes",
+			"reset": "Reset"
+		},
+		"orders": {
+			"title": "Orders Management",
+			"countLabel": "orders",
+			"filter": "Filter:",
+			"today": "Today's Orders",
+			"pending": "Pending Orders",
+			"all": "All Orders",
+			"deliveryAddress": "Delivery Address:",
+			"items": "Order Items:",
+			"qty": "Qty",
+			"each": "each",
+			"updateStatus": "Update order status:",
+			"status": {
+				"pending": "Pending",
+				"preparing": "Preparing",
+				"sent": "Sent",
+				"completed": "Completed"
+			},
+			"noneTitle": "No orders found",
+			"noneToday": "No orders have been placed today yet.",
+			"nonePending": "No pending orders at the moment.",
+			"noneAll": "No orders have been placed yet."
+		}
 	}
 }
 

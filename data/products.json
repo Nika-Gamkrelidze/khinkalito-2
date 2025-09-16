@@ -1,8 +1,7 @@
 [
   {
     "id": "a186fb9a-4d83-4836-8e73-083998ae0563",
-    "name": "Traditional Beef & Pork Khinkali",
-    "description": "Classic Georgian khinkali with juicy beef-pork filling.",
+    "description": "Classic Georgian khinkali with juicy beef-pork filling.s",
     "image": "/images/products/1757963442804_1.jpg",
     "sizes": [
       {
@@ -14,11 +13,18 @@
         "price": 20
       }
     ],
-    "active": true
+    "active": true,
+    "name": {
+      "en": "Traditional Beef & Pork Khinkaliსs",
+      "ka": "დdდs"
+    }
   },
   {
     "id": "0fc97435-c11e-4a0d-bc5c-422ee07d6949",
-    "name": "Beef Khinkali",
+    "name": {
+      "en": "Khinkal",
+      "ka": "d"
+    },
     "description": "All-beef filling, peppered and aromatic.",
     "image": null,
     "sizes": [

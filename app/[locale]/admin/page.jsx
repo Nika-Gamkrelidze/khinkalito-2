@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {useLocale} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function DashboardIcon(props) {
@@ -40,6 +40,7 @@ function ArrowLeftIcon(props) {
 
 export default function AdminPage() {
   const locale = useLocale();
+  const t = useTranslations();
   const [tab, setTab] = useState("products");
   
   return (
@@ -54,8 +55,8 @@ export default function AdminPage() {
                 <span className="text-white font-bold text-lg">K</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg text-gray-900">Khinkalito Admin</span>
-                <span className="text-xs text-gray-500">Management Dashboard</span>
+                <span className="font-bold text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
+                <span className="text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
               </div>
             </div>
 
@@ -67,7 +68,7 @@ export default function AdminPage() {
                 className="btn-secondary hover:scale-105 transition-all duration-200"
               >
                 <ArrowLeftIcon />
-                <span className="hidden sm:inline">Back to Site</span>
+                <span className="hidden sm:inline">{t("admin.back", { default: "Back to Site" })}</span>
               </a>
             </div>
           </div>
@@ -87,7 +88,7 @@ export default function AdminPage() {
               }`}
             >
               <PackageIcon />
-              Products
+              {t("admin.tabs.products", { default: "Products" })}
             </button>
             <button 
               onClick={() => setTab("orders")} 
@@ -98,7 +99,7 @@ export default function AdminPage() {
               }`}
             >
               <ShoppingCartIcon />
-              Orders
+              {t("admin.tabs.orders", { default: "Orders" })}
             </button>
           </nav>
         </div>
@@ -114,9 +115,13 @@ export default function AdminPage() {
 
 function ProductsAdmin() {
   const [products, setProducts] = useState([]);
-  const [draft, setDraft] = useState({ name: "", description: "", image: null, sizes: [{ sizeKg: 0.5, price: 0 }, { sizeKg: 0.8, price: 0 }], active: true });
+  const [draft, setDraft] = useState({ nameEn: "", nameKa: "", descriptionEn: "", descriptionKa: "", image: null, sizes: [{ sizeKg: 0.5, price: 0 }, { sizeKg: 0.8, price: 0 }], active: true });
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editDrafts, setEditDrafts] = useState({});
+  const [showCreate, setShowCreate] = useState(false);
+  const locale = useLocale();
+  const t = useTranslations();
 
   useEffect(() => {
     refresh();
@@ -132,11 +137,20 @@ function ProductsAdmin() {
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({
+          nameEn: draft.nameEn,
+          nameKa: draft.nameKa,
+          descriptionEn: draft.descriptionEn,
+          descriptionKa: draft.descriptionKa,
+          image: draft.image,
+          sizes: draft.sizes,
+          active: draft.active
+        }),
       });
       if (res.ok) {
-        setDraft({ name: "", description: "", image: null, sizes: [{ sizeKg: 0.5, price: 0 }, { sizeKg: 0.8, price: 0 }], active: true });
+        setDraft({ nameEn: "", nameKa: "", descriptionEn: "", descriptionKa: "", image: null, sizes: [{ sizeKg: 0.5, price: 0 }, { sizeKg: 0.8, price: 0 }], active: true });
         refresh();
+        setShowCreate(false);
       }
     } finally {
       setLoading(false);
@@ -217,199 +231,110 @@ function ProductsAdmin() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      {/* Create Product Form */}
-      <div className="card card-elevated">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-              <span className="text-green-600 font-bold text-lg">+</span>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Create New Product</h2>
-          </div>
-          
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-              <input 
-                type="text"
-                placeholder="e.g., Traditional Beef Khinkali" 
-                value={draft.name} 
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })} 
-                className="input-field"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea 
-                placeholder="Describe the product, ingredients, and preparation..." 
-                value={draft.description} 
-                onChange={(e) => setDraft({ ...draft, description: e.target.value })} 
-                className="input-field resize-none h-24"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Product Image</label>
-              <div className="space-y-3">
-                {draft.image ? (
-                  <div className="relative">
-                    <img 
-                      src={draft.image} 
-                      alt="Product preview" 
-                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                    />
-                    <button 
-                      onClick={() => setDraft({ ...draft, image: null })}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    <div className="space-y-2">
-                      <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">📷</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <label htmlFor="image-upload-create" className="cursor-pointer text-red-600 hover:text-red-700 font-medium">
-                          Click to upload
-                        </label>
-                        <span> or drag and drop</span>
-                      </div>
-                      <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
-                    </div>
-                    <input
-                      id="image-upload-create"
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const imageUrl = await handleImageUpload(file);
-                          if (imageUrl) {
-                            setDraft({ ...draft, image: imageUrl });
-                          }
-                        }
-                      }}
-                      className="hidden"
-                      disabled={uploadingImage}
-                    />
-                  </div>
-                )}
-                {uploadingImage && (
-                  <div className="text-center py-2">
-                    <span className="text-sm text-gray-600">Uploading image...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Size Options & Pricing</label>
-              <div className="space-y-3">
-                {draft.sizes.map((s, idx) => (
-                  <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">Size:</span>
-                      <span className="px-2 py-1 bg-white rounded-md text-sm font-medium">{s.sizeKg} kg</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-sm font-medium text-gray-600">Price:</span>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        step="0.1"
-                        value={s.price} 
-                        onChange={(e) => {
-                          const v = Number(e.target.value);
-                          const ns = [...draft.sizes];
-                          ns[idx] = { ...ns[idx], price: v };
-                          setDraft({ ...draft, sizes: ns });
-                        }} 
-                        className="input-field w-24"
-                      />
-                      <span className="text-sm font-medium text-gray-600">₾</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-              <input 
-                type="checkbox" 
-                id="active-checkbox"
-                checked={draft.active} 
-                onChange={(e) => setDraft({ ...draft, active: e.target.checked })} 
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="active-checkbox" className="text-sm font-medium text-gray-700">
-                Product is active and available for ordering
-              </label>
-            </div>
-            
-            <button 
-              disabled={loading || !draft.name.trim()} 
-              onClick={createProduct} 
-              className="btn-primary w-full justify-center py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Creating Product..." : "Create Product"}
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-8">
+      {/* Create Product Modal trigger is in header below */}
 
       {/* Products List */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Existing Products</h2>
-          <span className="text-sm text-gray-500">{products.length} products</span>
+          <h2 className="text-xl font-bold text-gray-900">{t("admin.list.title", { default: "Existing Products" })}</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">{products.length} {t("admin.list.countLabel", { default: "products" })}</span>
+            <button onClick={() => setShowCreate(true)} className="btn-primary">
+              {t("admin.create.open", { default: "Add New Product" })}
+            </button>
+          </div>
         </div>
         
         <div className="space-y-4">
-          {products.map((p) => (
-            <div key={p.id} className="card hover:shadow-lg transition-all duration-200">
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <input 
-                      className="text-lg font-bold text-gray-900 bg-transparent border-0 border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none w-full pb-1" 
-                      value={p.name} 
-                      onChange={(e) => updateProduct({ ...p, name: e.target.value })} 
-                    />
+          {products.map((p) => {
+            const currentName = typeof p.name === 'object' ? { en: p.name.en || "", ka: p.name.ka || "" } : { en: p.name || "", ka: "" };
+            const currentDesc = typeof p.description === 'object' ? { en: p.description.en || "", ka: p.description.ka || "" } : { en: p.description || "", ka: "" };
+            const d = editDrafts[p.id] || { nameEn: currentName.en, nameKa: currentName.ka, descriptionEn: currentDesc.en, descriptionKa: currentDesc.ka, sizes: p.sizes || [], active: p.active };
+            const changed = d.nameEn !== currentName.en || d.nameKa !== currentName.ka || d.descriptionEn !== currentDesc.en || d.descriptionKa !== currentDesc.ka || d.active !== p.active || JSON.stringify(d.sizes) !== JSON.stringify(p.sizes);
+            const setD = (partial) => setEditDrafts((prev) => ({ ...prev, [p.id]: { ...d, ...partial } }));
+            return (
+              <div key={p.id} className="card hover:shadow-lg transition-all duration-200">
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input 
+                          className="text-lg font-bold text-gray-900 bg-transparent border-0 border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none w-full pb-1" 
+                          value={d.nameEn}
+                          placeholder={t("admin.create.nameEn", { default: "Product Name (English)" })}
+                          onChange={(e) => setD({ nameEn: e.target.value })} 
+                        />
+                        <input 
+                          className="text-lg font-bold text-gray-900 bg-transparent border-0 border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none w-full pb-1" 
+                          value={d.nameKa}
+                          placeholder={t("admin.create.nameKa", { default: "Product Name (Georgian)" })}
+                          onChange={(e) => setD({ nameKa: e.target.value })} 
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 ml-4">
+                      <label className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          checked={d.active} 
+                          onChange={(e) => setD({ active: e.target.checked })} 
+                          className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                        />
+                        <span className={`text-sm font-medium ${d.active ? 'text-green-600' : 'text-gray-400'}`}>
+                          {d.active ? t("admin.product.active", { default: "Active" }) : t("admin.product.inactive", { default: "Inactive" })}
+                        </span>
+                      </label>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 ml-4">
-                    <label className="flex items-center gap-2">
-                      <input 
-                        type="checkbox" 
-                        checked={p.active} 
-                        onChange={(e) => updateProduct({ ...p, active: e.target.checked })} 
-                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                      />
-                      <span className={`text-sm font-medium ${p.active ? 'text-green-600' : 'text-gray-400'}`}>
-                        {p.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </label>
-                  </div>
-                </div>
 
-                {/* Product Image Section */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                  {p.image ? (
-                    <div className="relative">
-                      <img 
-                        src={p.image} 
-                        alt={p.name} 
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <label className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
-                          📷
+                  {/* Product Image Section */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.image", { default: "Product Image" })}</label>
+                    {p.image ? (
+                      <div className="relative">
+                        <img 
+                          src={p.image} 
+                          alt={typeof p.name === 'object' ? (p.name[locale] || p.name.en || p.name.ka || "") : p.name} 
+                          className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <label className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
+                            📷
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  handleImageUpload(file, true, p.id);
+                                }
+                              }}
+                              className="hidden"
+                              disabled={uploadingImage}
+                            />
+                          </label>
+                          <button 
+                            onClick={() => removeProductImage(p.id)}
+                            className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                        <div className="space-y-2">
+                          <div className="mx-auto w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <span className="text-xl">📷</span>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <label htmlFor={`image-upload-${p.id}`} className="cursor-pointer text-red-600 hover:text-red-700 font-medium">
+                              {t("admin.product.addImage", { default: "Add product image" })}
+                            </label>
+                          </div>
                           <input
+                            id={`image-upload-${p.id}`}
                             type="file"
                             accept="image/*"
                             onChange={(e) => {
@@ -421,104 +346,179 @@ function ProductsAdmin() {
                             className="hidden"
                             disabled={uploadingImage}
                           />
-                        </label>
-                        <button 
-                          onClick={() => removeProductImage(p.id)}
-                          className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-                      <div className="space-y-2">
-                        <div className="mx-auto w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <span className="text-xl">📷</span>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          <label htmlFor={`image-upload-${p.id}`} className="cursor-pointer text-red-600 hover:text-red-700 font-medium">
-                            Add product image
-                          </label>
-                        </div>
-                        <input
-                          id={`image-upload-${p.id}`}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              handleImageUpload(file, true, p.id);
-                            }
-                          }}
-                          className="hidden"
-                          disabled={uploadingImage}
-                        />
                       </div>
-                    </div>
-                  )}
-                  {uploadingImage && (
-                    <div className="text-center py-2">
-                      <span className="text-sm text-gray-600">Uploading image...</span>
-                    </div>
-                  )}
-                </div>
-                
-                <textarea 
-                  className="w-full text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none resize-none" 
-                  rows="2"
-                  value={p.description} 
-                  onChange={(e) => updateProduct({ ...p, description: e.target.value })} 
-                />
-                
-                <div className="mt-4 space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Pricing:</div>
+                    )}
+                    {uploadingImage && (
+                      <div className="text-center py-2">
+                        <span className="text-sm text-gray-600">{t("admin.create.uploading", { default: "Uploading image..." })}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {p.sizes.map((s, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <span className="text-sm font-medium text-gray-600 w-16">{s.sizeKg} kg</span>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          step="0.1"
-                          value={s.price} 
-                          onChange={(e) => {
-                            const v = Number(e.target.value);
-                            const ns = [...p.sizes];
-                            ns[idx] = { ...ns[idx], price: v };
-                            updateProduct({ ...p, sizes: ns });
-                          }} 
-                          className="input-field w-20 text-center"
-                        />
-                        <span className="text-sm font-medium text-gray-600">₾</span>
-                      </div>
-                    ))}
+                    <textarea 
+                      className="w-full text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none resize-none" 
+                      rows="3"
+                      value={d.descriptionEn}
+                      placeholder={t("admin.create.descriptionEn", { default: "Description (English)" })}
+                      onChange={(e) => setD({ descriptionEn: e.target.value })}
+                    />
+                    <textarea 
+                      className="w-full text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none resize-none" 
+                      rows="3"
+                      value={d.descriptionKa}
+                      placeholder={t("admin.create.descriptionKa", { default: "Description (Georgian)" })}
+                      onChange={(e) => setD({ descriptionKa: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="mt-4 space-y-2">
+                    <div className="text-sm font-medium text-gray-700">{t("admin.product.pricing", { default: "Pricing:" })}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(d.sizes || []).map((s, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <span className="text-sm font-medium text-gray-600 w-16">{s.sizeKg} kg</span>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            step="0.1"
+                            value={s.price} 
+                            onChange={(e) => {
+                              const v = Number(e.target.value);
+                              const ns = [...d.sizes];
+                              ns[idx] = { ...ns[idx], price: v };
+                              setD({ sizes: ns });
+                            }} 
+                            className="input-field w-20 text-center"
+                          />
+                          <span className="text-sm font-medium text-gray-600">₾</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex gap-2">
+                      <button 
+                        disabled={!changed}
+                        onClick={() => setEditDrafts((prev) => { const cp = { ...prev }; delete cp[p.id]; return cp; })}
+                        className="px-3 py-1 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 disabled:opacity-50"
+                      >
+                        {t('admin.product.reset', { default: 'Reset' })}
+                      </button>
+                      <button 
+                        disabled={!changed}
+                        onClick={() => updateProduct({ id: p.id, nameEn: d.nameEn, nameKa: d.nameKa, descriptionEn: d.descriptionEn, descriptionKa: d.descriptionKa, sizes: d.sizes, active: d.active }).then(() => setEditDrafts(prev => { const cp = { ...prev }; delete cp[p.id]; return cp; }))}
+                        className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        {t('admin.product.save', { default: 'Save Changes' })}
+                      </button>
+                    </div>
+                    <button 
+                      className="text-red-600 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-3 py-1 rounded-lg transition-colors" 
+                      onClick={() => deleteProduct(p.id)}
+                    >
+                      {t("admin.product.delete", { default: "Delete Product" })}
+                    </button>
                   </div>
                 </div>
-                
-                <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-                  <button 
-                    className="text-red-600 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-3 py-1 rounded-lg transition-colors" 
-                    onClick={() => deleteProduct(p.id)}
-                  >
-                    Delete Product
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           {products.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <ShoppingCartIcon className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="font-medium text-gray-900 mb-2">No products yet</h3>
-              <p className="text-gray-500 text-sm">Create your first product to get started.</p>
+              <h3 className="font-medium text-gray-900 mb-2">{t("admin.list.emptyTitle", { default: "No products yet" })}</h3>
+              <p className="text-gray-500 text-sm">{t("admin.list.emptyDesc", { default: "Create your first product to get started." })}</p>
             </div>
           )}
         </div>
       </div>
+      {/* Create Product Modal */}
+      {showCreate && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
+          <div className="absolute inset-0 p-4 flex items-center justify-center">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                      <span className="text-green-600 font-bold text-lg">+</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">{t("admin.create.title", { default: "Create New Product" })}</h2>
+                  </div>
+                  <button onClick={() => setShowCreate(false)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">×</button>
+                </div>
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.nameEn", { default: "Product Name (English)" })}</label>
+                      <input type="text" placeholder="Traditional Beef Khinkali" value={draft.nameEn} onChange={(e) => setDraft({ ...draft, nameEn: e.target.value })} className="input-field" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.nameKa", { default: "Product Name (Georgian)" })}</label>
+                      <input type="text" placeholder="ქართული სახელი" value={draft.nameKa} onChange={(e) => setDraft({ ...draft, nameKa: e.target.value })} className="input-field" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.descriptionEn", { default: "Description (English)" })}</label>
+                      <textarea placeholder={t("admin.create.descriptionEn", { default: "Description (English)" }) + "..."} value={draft.descriptionEn} onChange={(e) => setDraft({ ...draft, descriptionEn: e.target.value })} className="input-field resize-none h-24" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.descriptionKa", { default: "Description (Georgian)" })}</label>
+                      <textarea placeholder={t("admin.create.descriptionKa", { default: "Description (Georgian)" }) + "..."} value={draft.descriptionKa} onChange={(e) => setDraft({ ...draft, descriptionKa: e.target.value })} className="input-field resize-none h-24" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t("admin.create.image", { default: "Product Image" })}</label>
+                    <div className="space-y-3">
+                      {draft.image ? (
+                        <div className="relative">
+                          <img src={draft.image} alt="Product preview" className="w-full h-48 object-cover rounded-lg border border-gray-200" />
+                          <button onClick={() => setDraft({ ...draft, image: null })} className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">×</button>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                          <div className="space-y-2">
+                            <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center"><span className="text-2xl">📷</span></div>
+                            <div className="text-sm text-gray-600">
+                              <label htmlFor="image-upload-create" className="cursor-pointer text-red-600 hover:text-red-700 font-medium">{t("admin.create.clickToUpload", { default: "Click to upload" })}</label>
+                              <span> {t("admin.create.orDragDrop", { default: "or drag and drop" })}</span>
+                            </div>
+                            <p className="text-xs text-gray-500">{t("admin.create.pngInfo", { default: "PNG, JPG, WebP up to 5MB" })}</p>
+                          </div>
+                          <input id="image-upload-create" type="file" accept="image/*" onChange={async (e) => { const file = e.target.files[0]; if (file) { const imageUrl = await handleImageUpload(file); if (imageUrl) { setDraft({ ...draft, image: imageUrl }); } } }} className="hidden" disabled={uploadingImage} />
+                        </div>
+                      )}
+                      {uploadingImage && (<div className="text-center py-2"><span className="text-sm text-gray-600">{t("admin.create.uploading", { default: "Uploading image..." })}</span></div>)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t("admin.create.sizePricing", { default: "Size Options & Pricing" })}</label>
+                    <div className="space-y-3">
+                      {draft.sizes.map((s, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2"><span className="text-sm font-medium text-gray-600">{t("admin.create.size", { default: "Size:" })}</span><span className="px-2 py-1 bg-white rounded-md text-sm font-medium">{s.sizeKg} kg</span></div>
+                          <div className="flex items-center gap-2 flex-1"><span className="text-sm font-medium text-gray-600">{t("admin.create.price", { default: "Price:" })}</span><input type="number" min="0" step="0.1" value={s.price} onChange={(e) => { const v = Number(e.target.value); const ns = [...draft.sizes]; ns[idx] = { ...ns[idx], price: v }; setDraft({ ...draft, sizes: ns }); }} className="input-field w-24" /><span className="text-sm font-medium text-gray-600">₾</span></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                    <input type="checkbox" id="active-checkbox" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                    <label htmlFor="active-checkbox" className="text-sm font-medium text-gray-700">{t("admin.create.activeLabel", { default: "Product is active and available for ordering" })}</label>
+                  </div>
+                  <button disabled={loading || (!draft.nameEn.trim() && !draft.nameKa.trim())} onClick={createProduct} className="btn-primary w-full justify-center py-3 disabled:opacity-50 disabled:cursor-not-allowed">{loading ? t("admin.create.creating", { default: "Creating Product..." }) : t("admin.create.create", { default: "Create Product" })}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -526,6 +526,7 @@ function ProductsAdmin() {
 function OrdersAdmin() {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("today");
+  const t = useTranslations();
 
   useEffect(() => {
     refresh();
@@ -577,20 +578,20 @@ function OrdersAdmin() {
         <div className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">Orders Management</h2>
-              <span className="text-sm text-gray-500">({orders.length} orders)</span>
+              <h2 className="text-xl font-bold text-gray-900">{t("admin.orders.title", { default: "Orders Management" })}</h2>
+              <span className="text-sm text-gray-500">({orders.length} {t("admin.orders.countLabel", { default: "orders" })})</span>
             </div>
             
             <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700">Filter:</label>
+              <label className="text-sm font-medium text-gray-700">{t("admin.orders.filter", { default: "Filter:" })}</label>
               <select 
                 className="input-field w-auto min-w-[160px]" 
                 value={filter} 
                 onChange={(e) => setFilter(e.target.value)}
               >
-                <option value="today">Today's Orders</option>
-                <option value="pending">Pending Orders</option>
-                <option value="all">All Orders</option>
+                <option value="today">{t("admin.orders.today", { default: "Today's Orders" })}</option>
+                <option value="pending">{t("admin.orders.pending", { default: "Pending Orders" })}</option>
+                <option value="all">{t("admin.orders.all", { default: "All Orders" })}</option>
               </select>
             </div>
           </div>
@@ -626,7 +627,7 @@ function OrdersAdmin() {
 
               {/* Address */}
               <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <div className="text-sm font-medium text-gray-700 mb-1">📍 Delivery Address:</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">📍 {t("admin.orders.deliveryAddress", { default: "Delivery Address:" })}</div>
                 <div className="text-sm text-gray-600">
                   {order.address.text || (
                     order.address.location 
@@ -638,7 +639,7 @@ function OrdersAdmin() {
 
               {/* Order Items */}
               <div className="mb-4">
-                <div className="text-sm font-medium text-gray-700 mb-2">Order Items:</div>
+                <div className="text-sm font-medium text-gray-700 mb-2">{t("admin.orders.items", { default: "Order Items:" })}</div>
                 <div className="space-y-2">
                   {order.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
@@ -648,12 +649,12 @@ function OrdersAdmin() {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{item.productName}</div>
-                          <div className="text-sm text-gray-500">{item.sizeKg}kg • Qty: {item.quantity}</div>
+                          <div className="text-sm text-gray-500">{item.sizeKg}kg • {t("admin.orders.qty", { default: "Qty" })}: {item.quantity}</div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-gray-900">{item.lineTotal.toFixed(0)} ₾</div>
-                        <div className="text-sm text-gray-500">{(item.lineTotal / item.quantity).toFixed(0)} ₾ each</div>
+                        <div className="text-sm text-gray-500">{(item.lineTotal / item.quantity).toFixed(0)} ₾ {t("admin.orders.each", { default: "each" })}</div>
                       </div>
                     </div>
                   ))}
@@ -663,7 +664,7 @@ function OrdersAdmin() {
               {/* Status Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="text-sm text-gray-500">
-                  Update order status:
+                  {t("admin.orders.updateStatus", { default: "Update order status:" })}
                 </div>
                 <div className="flex gap-2">
                   <button 
@@ -674,7 +675,7 @@ function OrdersAdmin() {
                         : "bg-white text-gray-600 border border-gray-200 hover:bg-yellow-50 hover:border-yellow-300"
                     }`}
                   >
-                    Pending
+                    {t("admin.orders.status.pending", { default: "Pending" })}
                   </button>
                   <button 
                     onClick={() => setStatus(order.id, "preparing")}
@@ -684,7 +685,7 @@ function OrdersAdmin() {
                         : "bg-white text-gray-600 border border-gray-200 hover:bg-blue-50 hover:border-blue-300"
                     }`}
                   >
-                    Preparing
+                    {t("admin.orders.status.preparing", { default: "Preparing" })}
                   </button>
                   <button 
                     onClick={() => setStatus(order.id, "sent")}
@@ -694,7 +695,7 @@ function OrdersAdmin() {
                         : "bg-white text-gray-600 border border-gray-200 hover:bg-purple-50 hover:border-purple-300"
                     }`}
                   >
-                    Sent
+                    {t("admin.orders.status.sent", { default: "Sent" })}
                   </button>
                   <button 
                     onClick={() => setStatus(order.id, "completed")}
@@ -704,7 +705,7 @@ function OrdersAdmin() {
                         : "bg-white text-gray-600 border border-gray-200 hover:bg-green-50 hover:border-green-300"
                     }`}
                   >
-                    Completed
+                    {t("admin.orders.status.completed", { default: "Completed" })}
                   </button>
                 </div>
               </div>
@@ -717,11 +718,11 @@ function OrdersAdmin() {
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <ShoppingCartIcon className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="font-medium text-gray-900 mb-2">No orders found</h3>
+            <h3 className="font-medium text-gray-900 mb-2">{t("admin.orders.noneTitle", { default: "No orders found" })}</h3>
             <p className="text-gray-500 text-sm">
-              {filter === "today" ? "No orders have been placed today yet." : 
-               filter === "pending" ? "No pending orders at the moment." : 
-               "No orders have been placed yet."}
+              {filter === "today" ? t("admin.orders.noneToday", { default: "No orders have been placed today yet." }) : 
+               filter === "pending" ? t("admin.orders.nonePending", { default: "No pending orders at the moment." }) : 
+               t("admin.orders.noneAll", { default: "No orders have been placed yet." })}
             </p>
           </div>
         )}

@@ -36,9 +36,10 @@ export async function POST(request) {
     if (!size) throw new Error("Size not found");
     const quantity = Math.max(1, Number(it.quantity || 1));
     const price = size.price * quantity;
+    const productName = typeof product.name === "object" ? (product.name.en || product.name.ka || "") : product.name;
     return {
       productId: product.id,
-      productName: product.name,
+      productName,
       sizeKg: size.sizeKg,
       unitPrice: size.price,
       quantity,
