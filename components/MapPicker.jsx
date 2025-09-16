@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
+import { useMapEvents } from "react-leaflet";
 
 const MapContainer = dynamic(
   async () => (await import("react-leaflet")).MapContainer,
@@ -13,10 +14,7 @@ const TileLayer = dynamic(async () => (await import("react-leaflet")).TileLayer,
 const Marker = dynamic(async () => (await import("react-leaflet")).Marker, {
   ssr: false
 });
-const useMapEvents = dynamic(
-  async () => (await import("react-leaflet")).useMapEvents,
-  { ssr: false }
-);
+// useMapEvents is a hook; import directly instead of dynamic
 
 export default function MapPicker({ value, onChange, onAddress, height = 320 }) {
   const [L, setL] = useState(null);

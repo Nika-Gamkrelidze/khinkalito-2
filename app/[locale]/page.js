@@ -242,17 +242,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50 pt-2">
       {/* Modern Navigation Header */}
-      <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm py-2">
+      <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm py-1 md:py-2">
         <nav className="container mx-auto">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 md:h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center overflow-hidden">
+              <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center overflow-hidden">
                 <img src="/logo.png" alt="Khinkalito" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg text-gray-900">{t("common.brand")}</span>
-                <span className="text-xs text-gray-500 hidden md:block">{t("common.tagline")}</span>
+                <span className="font-bold text-base md:text-lg text-gray-900">{t("common.brand")}</span>
+                <span className="text-[11px] md:text-xs text-gray-500 hidden md:block">{t("common.tagline")}</span>
               </div>
             </div>
 
@@ -282,7 +282,7 @@ export default function Home() {
                 <CartIcon />
                 <span className="hidden md:inline">{t("common.cart")}</span>
                 {detailedCart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 h-6 w-6 bg-amber-400 text-red-800 text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                  <span className="absolute -top-2 -right-2 h-5 w-5 md:h-6 md:w-6 bg-amber-400 text-red-800 text-[10px] md:text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
                     {detailedCart.length}
                   </span>
                 )}
@@ -293,13 +293,13 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-6">
+      <section className="relative overflow-hidden py-4 md:py-6">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-amber-600/20" />
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
         </div>
         
-        <div className="relative container mx-auto py-16 md:py-24">
+        <div className="relative container mx-auto py-12 md:py-24">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
             <div className="mb-6">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-medium border border-red-200">
@@ -308,15 +308,15 @@ export default function Home() {
               </span>
             </div>
             
-            <h1 className="text-hero gradient-text mb-6 text-balance">
+            <h1 className="text-hero gradient-text mb-4 md:mb-6 text-balance">
               {settings?.heroTitle?.[locale] || t("home.heroTitle")}
             </h1>
             
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
               {settings?.heroDesc?.[locale] || t("home.heroDesc")}
             </p>
             
-            <div className="flex flex-wrap justify-center gap-6 mb-10">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 md:mb-10">
               <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <StarIcon className="text-amber-600 w-6 h-6" />
@@ -350,7 +350,7 @@ export default function Home() {
             
             <button 
               onClick={() => document.getElementById('menu').scrollIntoView({ behavior: 'smooth' })}
-              className="btn-primary text-lg px-8 py-4 hover:scale-105 transition-all duration-300 shadow-xl"
+              className="btn-primary text-base md:text-lg px-5 py-3 md:px-8 md:py-4 hover:scale-105 transition-all duration-300 shadow-xl"
             >
               <CartIcon />
               {t("common.orderNow")}
@@ -403,16 +403,16 @@ export default function Home() {
       </section>
 
       {/* Menu Section */}
-      <section id="menu" className="py-20 bg-gray-50">
+      <section id="menu" className="py-12 md:py-20 bg-gray-50">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-section text-gray-900 mb-4">{t("home.menuTitle")}</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-section text-gray-900 mb-3 md:mb-4">{t("home.menuTitle")}</h2>
+            <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
               {settings?.menuDesc?.[locale] || t("home.menuDesc")}
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-8">
             {products.map((p, index) => (
               <div key={p.id} className="h-full" style={{ animationDelay: `${index * 100}ms` }}>
                 <ProductCard product={p} onAdd={addToCart} t={t} />
@@ -432,11 +432,11 @@ export default function Home() {
       </section>
 
       {/* Order Form Section */}
-      <section id="checkout" className="py-20 bg-white">
+      <section id="checkout" className="py-12 md:py-20 bg-white">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-section text-gray-900 mb-4">{t("home.completeOrderTitle")}</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-section text-gray-900 mb-3 md:mb-4">{t("home.completeOrderTitle")}</h2>
+            <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
               {settings?.completeOrderDesc?.[locale] || t("home.completeOrderDesc")}
             </p>
           </div>
@@ -444,12 +444,12 @@ export default function Home() {
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 md:gap-12">
             {/* Order Form */}
             <div className="card card-elevated animate-fade-in">
-              <div className="p-8">
+              <div className="p-5 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                     <span className="text-red-600 font-bold text-sm">1</span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">{t("home.contactInfo")}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">{t("home.contactInfo")}</h3>
                 </div>
                 
                 <div className="space-y-4 mb-8">
@@ -492,7 +492,7 @@ export default function Home() {
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                     <span className="text-blue-600 font-bold text-sm">2</span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">{t("home.deliveryAddress")}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">{t("home.deliveryAddress")}</h3>
                 </div>
                 
                 <div className="space-y-4 mb-8">
@@ -521,7 +521,7 @@ export default function Home() {
                 <button 
                   disabled={submitting || cart.length === 0} 
                   onClick={submitOrder} 
-                  className="btn-primary w-full justify-center text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all duration-200"
+                  className="btn-primary w-full justify-center text-base md:text-lg py-3 md:py-4 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all duration-200"
                 >
                   <CartIcon />
                   {submitting ? t("home.placingOrder") : `${t("home.placeOrder")} • ${total.toFixed(0)} ₾`}
@@ -550,12 +550,12 @@ export default function Home() {
             
             {/* Map */}
             <div className="card animate-fade-in">
-              <div className="p-4">
+              <div className="p-3 md:p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <LocationIcon className="w-6 h-6 text-blue-600" />
-                  <h3 className="text-lg font-bold text-gray-900">{t("home.selectLocation")}</h3>
+                  <h3 className="text-base md:text-lg font-bold text-gray-900">{t("home.selectLocation")}</h3>
                 </div>
-                <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={400} />
+                <MapPicker value={location} onChange={setLocation} onAddress={setAddressText} height={320} />
                 <div className="text-sm text-gray-500 mt-3 p-3 bg-blue-50 rounded-lg">
                   💡 {t("home.mapTip")}
                 </div>

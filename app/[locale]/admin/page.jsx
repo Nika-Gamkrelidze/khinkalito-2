@@ -50,6 +50,7 @@ export default function AdminPage() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
+  const [mobileTabsOpen, setMobileTabsOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -103,7 +104,7 @@ export default function AdminPage() {
   
   if (!authChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-red-50">
+      <div className="admin min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-red-50">
         <div className="text-gray-600">Loading...</div>
       </div>
     );
@@ -111,37 +112,37 @@ export default function AdminPage() {
 
   if (!authUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+      <div className="admin min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
         <header className="sticky top-0 z-10 glass-effect border-b border-white/20 shadow-sm">
           <nav className="container mx-auto">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
+            <div className="flex items-center justify-between h-16 md:h-20">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">K</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
-                  <span className="text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
+                  <span className="font-bold text-base md:text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
+                  <span className="text-[11px] md:text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2">
                 <LanguageSwitcher />
                 <a 
                   href={`/${locale}`} 
                   className="btn-secondary hover:scale-105 transition-all duration-200"
                 >
                   <ArrowLeftIcon />
-                  <span className="hidden sm:inline">{t("admin.back", { default: "Back to Site" })}</span>
+                  <span className="hidden md:inline">{t("admin.back", { default: "Back to Site" })}</span>
                 </a>
               </div>
             </div>
           </nav>
         </header>
 
-        <div className="container mx-auto py-10">
+        <div className="container mx-auto py-8">
           <div className="max-w-md mx-auto card">
-            <form className="p-6 space-y-4" onSubmit={handleLogin}>
-              <h1 className="text-xl font-bold text-gray-900">Admin Login</h1>
+            <form className="p-5 md:p-6 space-y-4" onSubmit={handleLogin}>
+              <h1 className="text-lg md:text-xl font-bold text-gray-900">Admin Login</h1>
               {authError && (
                 <div className="p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">{authError}</div>
               )}
@@ -182,24 +183,24 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+    <div className="admin min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
       {/* Modern Admin Header */}
       <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm">
         <nav className="container mx-auto">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-wrap items-center justify-between gap-2 py-2 md:h-20 md:py-0">
             {/* Logo & Title */}
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
+            <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
+              <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">K</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
-                <span className="text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
+                <span className="font-bold text-base md:text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
+                <span className="text-[11px] md:text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1 md:gap-2 w-full md:w-auto justify-end">
               <LanguageSwitcher />
               <button 
                 onClick={handleLogout} 
@@ -207,14 +208,14 @@ export default function AdminPage() {
                 title="Logout"
               >
                 ⎋
-                <span className="hidden sm:inline ml-1">Logout</span>
+                <span className="hidden md:inline ml-1">Logout</span>
               </button>
               <a 
                 href={`/${locale}`} 
                 className="btn-secondary hover:scale-105 transition-all duration-200"
               >
                 <ArrowLeftIcon />
-                <span className="hidden sm:inline">{t("admin.back", { default: "Back to Site" })}</span>
+                <span className="hidden md:inline">{t("admin.back", { default: "Back to Site" })}</span>
               </a>
             </div>
           </div>
@@ -224,10 +225,53 @@ export default function AdminPage() {
       <div className="container mx-auto py-8">
         {/* Tab Navigation */}
         <div className="mb-8">
-          <nav className="flex gap-2 p-2 bg-white rounded-2xl shadow-sm border border-gray-100 w-fit">
+          {/* Mobile: custom dropdown (no native select) */}
+          <div className="md:hidden mb-3 relative">
+            <button
+              onClick={() => setMobileTabsOpen((v) => !v)}
+              className={`w-full justify-between btn-secondary ${mobileTabsOpen ? "ring-2 ring-red-200" : ""}`}
+            >
+              <span className="flex items-center gap-2">
+                {tab === "products" ? <PackageIcon /> : tab === "orders" ? <ShoppingCartIcon /> : <span>⚙️</span>}
+                {tab === "products" ? t("admin.tabs.products", { default: "Products" }) : tab === "orders" ? t("admin.tabs.orders", { default: "Orders" }) : "Settings"}
+              </span>
+              <span className="text-gray-500">▾</span>
+            </button>
+            {mobileTabsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMobileTabsOpen(false)} />
+                <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl p-2">
+                  <button
+                    onClick={() => { setTab("products"); setMobileTabsOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 ${tab === "products" ? "bg-red-50 text-red-700" : "hover:bg-gray-50"}`}
+                  >
+                    <PackageIcon />
+                    {t("admin.tabs.products", { default: "Products" })}
+                  </button>
+                  <button
+                    onClick={() => { setTab("orders"); setMobileTabsOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 ${tab === "orders" ? "bg-red-50 text-red-700" : "hover:bg-gray-50"}`}
+                  >
+                    <ShoppingCartIcon />
+                    {t("admin.tabs.orders", { default: "Orders" })}
+                  </button>
+                  <button
+                    onClick={() => { setTab("settings"); setMobileTabsOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 ${tab === "settings" ? "bg-red-50 text-red-700" : "hover:bg-gray-50"}`}
+                  >
+                    <span>⚙️</span>
+                    Settings
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Desktop: full tab bar */}
+          <nav className="hidden md:flex gap-2 p-2 bg-white rounded-2xl shadow-sm border border-gray-100 w-fit mx-auto">
             <button 
               onClick={() => setTab("products")} 
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl font-medium transition-all duration-200 ${
                 tab === "products" 
                   ? "bg-red-600 text-white shadow-lg transform scale-105" 
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -238,7 +282,7 @@ export default function AdminPage() {
             </button>
             <button 
               onClick={() => setTab("orders")} 
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl font-medium transition-all duration-200 ${
                 tab === "orders" 
                   ? "bg-red-600 text-white shadow-lg transform scale-105" 
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -249,7 +293,7 @@ export default function AdminPage() {
             </button>
             <button 
               onClick={() => setTab("settings")} 
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl font-medium transition-all duration-200 ${
                 tab === "settings" 
                   ? "bg-red-600 text-white shadow-lg transform scale-105" 
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -415,7 +459,7 @@ function ProductsAdmin() {
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         <input 
                           className="text-lg font-bold text-gray-900 bg-transparent border-0 border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none w-full pb-1" 
                           value={d.nameEn}
@@ -513,7 +557,7 @@ function ProductsAdmin() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <textarea 
                       className="w-full text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:border-red-500 focus:outline-none resize-none" 
                       rows="3"
@@ -532,7 +576,7 @@ function ProductsAdmin() {
                   
                   <div className="mt-4 space-y-2">
                     <div className="text-sm font-medium text-gray-700">{t("admin.product.pricing", { default: "Pricing:" })}</div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       {(d.sizes || []).map((s, idx) => (
                         <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                           <span className="text-sm font-medium text-gray-600 w-16">{s.sizeKg} kg</span>
@@ -600,7 +644,7 @@ function ProductsAdmin() {
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
           <div className="absolute inset-0 p-4 flex items-center justify-center">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -612,7 +656,7 @@ function ProductsAdmin() {
                   <button onClick={() => setShowCreate(false)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">×</button>
                 </div>
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t("admin.create.nameEn", { default: "Product Name (English)" })}</label>
                       <input type="text" placeholder="Traditional Beef Khinkali" value={draft.nameEn} onChange={(e) => setDraft({ ...draft, nameEn: e.target.value })} className="input-field" />
@@ -733,16 +777,16 @@ function OrdersAdmin() {
       {/* Filter Controls */}
       <div className="card">
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-3 md:gap-0 md:flex-row flex-col items-start">
+            <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
               <h2 className="text-xl font-bold text-gray-900">{t("admin.orders.title", { default: "Orders Management" })}</h2>
               <span className="text-sm text-gray-500">({orders.length} {t("admin.orders.countLabel", { default: "orders" })})</span>
             </div>
             
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700">{t("admin.orders.filter", { default: "Filter:" })}</label>
+            <div className="flex items-center gap-2 w-full md:w-auto md:justify-end">
+              <label className="text-sm font-medium text-gray-700 min-w-[64px]">{t("admin.orders.filter", { default: "Filter:" })}</label>
               <select 
-                className="input-field w-auto min-w-[160px]" 
+                className="input-field w-full md:w-auto min-w-[160px]" 
                 value={filter} 
                 onChange={(e) => setFilter(e.target.value)}
               >
@@ -766,13 +810,14 @@ function OrdersAdmin() {
                   <h3 className="text-lg font-bold text-gray-900">
                     {order.customer.firstName} {order.customer.lastName}
                   </h3>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                    <span>📞 {order.customer.phone}</span>
+                  <div className="flex items-center gap-3 md:gap-4 mt-1 text-sm text-gray-600 flex-wrap">
+                    <a href={`tel:${order.customer.phone}`} className="underline decoration-dotted underline-offset-2">📞 {order.customer.phone}</a>
+                    <span className="opacity-60">•</span>
                     <span>🕒 {formatDate(order.createdAt)}</span>
                   </div>
                 </div>
                 
-                <div className="text-right">
+                <div className="text-right w-full md:w-auto mt-3 md:mt-0">
                   <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </div>
@@ -819,11 +864,11 @@ function OrdersAdmin() {
               </div>
 
               {/* Status Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="text-sm text-gray-500">
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100 md:flex-row flex-col gap-3 md:gap-0">
+                <div className="text-sm text-gray-500 w-full md:w-auto">
                   {t("admin.orders.updateStatus", { default: "Update order status:" })}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 overflow-x-auto w-full md:w-auto -mx-2 px-2 pb-1">
                   <button 
                     onClick={() => setStatus(order.id, "pending")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -947,7 +992,7 @@ function SettingsAdmin() {
       <div className="card">
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Site Settings</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
               <input className="input-field" value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} placeholder="+995 555 123 456" />
@@ -981,7 +1026,7 @@ function SettingsAdmin() {
               <input className="input-field" value={settings.happyCustomers} onChange={(e) => setSettings({ ...settings, happyCustomers: e.target.value })} placeholder="500+" />
             </div>
           </div>
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="card">
               <div className="p-4 space-y-3">
                 <h3 className="font-semibold text-gray-900">Homepage Texts (EN)</h3>
@@ -1017,7 +1062,7 @@ function SettingsAdmin() {
               </div>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="card">
               <div className="p-4 space-y-3">
                 <h3 className="font-semibold text-gray-900">Footer (EN)</h3>
