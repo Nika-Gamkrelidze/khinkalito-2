@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 
 export async function POST(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const formData = await request.formData();
     const file = formData.get("file");
@@ -67,6 +69,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get("filename");

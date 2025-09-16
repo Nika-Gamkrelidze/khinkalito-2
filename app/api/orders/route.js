@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getOrders, saveOrders, getProducts, ensureSeedData } from "@/lib/storage";
 import { isValidGeorgianMobile } from "@/lib/phone";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const orders = getOrders();
@@ -72,6 +74,7 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json();
   const { id, status } = body;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

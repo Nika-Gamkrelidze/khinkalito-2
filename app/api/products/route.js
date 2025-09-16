@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProducts, saveProducts, ensureSeedData } from "@/lib/storage";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   ensureSeedData();
@@ -8,6 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json();
   const products = getProducts();
   // Support bilingual names: body may include name (string/object) or nameEn/nameKa
@@ -63,6 +65,7 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json();
   const { id, nameEn, nameKa, descriptionEn, descriptionKa, ...rest } = body;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -130,6 +133,7 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
+  if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

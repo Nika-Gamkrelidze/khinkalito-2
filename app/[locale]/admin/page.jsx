@@ -44,7 +44,143 @@ export default function AdminPage() {
   const locale = useLocale();
   const t = useTranslations();
   const [tab, setTab] = useState("products");
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authUser, setAuthUser] = useState(null);
+  const [authError, setAuthError] = useState(null);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  async function checkAuth() {
+    try {
+      setAuthError(null);
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      if (!res.ok) {
+        setAuthUser(null);
+      } else {
+        const data = await res.json();
+        if (data?.authenticated) setAuthUser(data.user);
+        else setAuthUser(null);
+      }
+    } catch (e) {
+      setAuthUser(null);
+    } finally {
+      setAuthChecked(true);
+    }
+  }
+
+  async function handleLogin(e) {
+    e?.preventDefault?.();
+    setLoggingIn(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Login failed");
+      setLoginUsername("");
+      setLoginPassword("");
+      await checkAuth();
+    } catch (e) {
+      setAuthError(e.message);
+    } finally {
+      setLoggingIn(false);
+    }
+  }
+
+  async function handleLogout() {
+    try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
+    setAuthUser(null);
+    setAuthChecked(true);
+  }
   
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-red-50">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
+        <header className="sticky top-0 z-10 glass-effect border-b border-white/20 shadow-sm">
+          <nav className="container mx-auto">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">K</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-lg text-gray-900">{t("admin.title", { default: "Khinkalito Admin" })}</span>
+                  <span className="text-xs text-gray-500">{t("admin.subtitle", { default: "Management Dashboard" })}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher />
+                <a 
+                  href={`/${locale}`} 
+                  className="btn-secondary hover:scale-105 transition-all duration-200"
+                >
+                  <ArrowLeftIcon />
+                  <span className="hidden sm:inline">{t("admin.back", { default: "Back to Site" })}</span>
+                </a>
+              </div>
+            </div>
+          </nav>
+        </header>
+
+        <div className="container mx-auto py-10">
+          <div className="max-w-md mx-auto card">
+            <form className="p-6 space-y-4" onSubmit={handleLogin}>
+              <h1 className="text-xl font-bold text-gray-900">Admin Login</h1>
+              {authError && (
+                <div className="p-3 rounded-lg bg-red-50 text-red-700 border border-red-200 text-sm">{authError}</div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input 
+                  className="input-field"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  placeholder="admin"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input 
+                  type="password"
+                  className="input-field"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={loggingIn || !loginUsername || !loginPassword}
+                className="btn-primary w-full justify-center disabled:opacity-50"
+              >
+                {loggingIn ? "Signing in..." : "Sign In"}
+              </button>
+              <div className="text-xs text-gray-500">
+                Tip: default admin is <span className="font-mono">admin</span> / <span className="font-mono">admin123</span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50">
       {/* Modern Admin Header */}
@@ -65,6 +201,14 @@ export default function AdminPage() {
             {/* Controls */}
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
+              <button 
+                onClick={handleLogout} 
+                className="btn-secondary hover:scale-105 transition-all duration-200"
+                title="Logout"
+              >
+                ⎋
+                <span className="hidden sm:inline ml-1">Logout</span>
+              </button>
               <a 
                 href={`/${locale}`} 
                 className="btn-secondary hover:scale-105 transition-all duration-200"

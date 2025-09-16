@@ -269,9 +269,7 @@ export default function Home() {
                   <span className="text-xs">{settings?.hours || t("common.hours")}</span>
                 </div>
               </div>
-              <a href={`/${locale}/admin`} className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium">
-                {t("common.admin")}
-              </a>
+              {/* Admin link removed to keep admin panel hidden from UI */}
             </div>
 
             <div className="flex items-center gap-3">
@@ -618,7 +616,7 @@ export default function Home() {
               <h3 className="font-bold text-lg mb-4">{t("common.quickLinks")}</h3>
               <div className="space-y-2">
                 <a href="#menu" className="block text-gray-300 hover:text-white transition-colors">{t("common.menu")}</a>
-                <a href={`/${locale}/admin`} className="block text-gray-300 hover:text-white transition-colors">{t("common.admin")}</a>
+                {/* Admin link removed from footer quick links */}
                 <button onClick={() => setCartOpen(true)} className="block text-gray-300 hover:text-white transition-colors text-left">
                   {t("common.cart")} ({detailedCart.length})
                 </button>
