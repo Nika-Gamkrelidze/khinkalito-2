@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {useTranslations, useLocale} from "next-intl";
 import MapPicker from "@/components/MapPicker";
-import { isValidGeorgianMobile } from "@/lib/phone";
+import { isValidGeorgianMobile, formatGeorgianMobileInput } from "@/lib/phone";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function PhoneIcon(props) {
@@ -87,7 +87,7 @@ function ProductCard({ product, onAdd, t }) {
   const selected = product.sizes.find((s) => s.sizeKg === size) || product.sizes[0];
   
   return (
-    <div className="card animate-fade-in group">
+    <div className="card animate-fade-in group h-full flex flex-col">
       <div className="relative h-48 bg-gradient-to-br from-red-50 via-amber-50 to-orange-50 overflow-hidden">
         {product.image ? (
           <img 
@@ -100,25 +100,16 @@ function ProductCard({ product, onAdd, t }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
         {/* Removed wishlist heart icon */}
-        <div className="absolute bottom-3 left-3 right-3">
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-lg">
-            <div className="flex items-center gap-2 text-sm">
-              {/* Removed star icon */}
-              <span className="font-medium">4.8</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-600">30-45 min</span>
-            </div>
-          </div>
-        </div>
+        {/* Removed rating/time overlay from product cards */}
       </div>
       
-      <div className="p-6 flex-1 flex flex-col gap-4">
+      <div className="p-6 flex-1 flex flex-col">
         <div>
           <h3 className="text-xl font-bold text-gray-900 leading-tight mb-2">{getProductName(product, locale)}</h3>
           <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{getProductDescription(product, locale)}</p>
         </div>
         
-        <div className="space-y-3">
+        <div className="mt-auto space-y-3">
           <div className="text-sm font-medium text-gray-700">Size Options:</div>
           <div className="flex gap-2">
             {product.sizes.map((s) => (
@@ -139,7 +130,7 @@ function ProductCard({ product, onAdd, t }) {
           </div>
         </div>
         
-        <div className="mt-auto pt-2">
+        <div className="pt-2">
           <button 
             onClick={() => onAdd(product.id, selected.sizeKg)} 
             className="btn-primary w-full justify-center text-base font-semibold py-3 hover:scale-105 transition-transform duration-200"
@@ -162,6 +153,7 @@ export default function Home() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [addressText, setAddressText] = useState("");
+  const [settings, setSettings] = useState(null);
   const [location, setLocation] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
@@ -169,6 +161,7 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
+    fetch("/api/settings").then((r) => r.json()).then(setSettings);
   }, []);
 
   function addToCart(productId, sizeKg) {
@@ -254,8 +247,8 @@ export default function Home() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">K</span>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Khinkalito" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-gray-900">{t("common.brand")}</span>
@@ -267,13 +260,13 @@ export default function Home() {
             <div className="hidden lg:flex items-center gap-8">
               <div className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <PhoneIcon className="text-red-600" />
-                <span className="font-medium">+995 555 123 456</span>
+                <span className="font-medium">{settings?.phone || "+995 555 123 456"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <ClockIcon className="text-green-600" />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{t("common.openDaily")}</span>
-                  <span className="text-xs">{t("common.hours")}</span>
+                  <span className="text-xs">{settings?.hours || t("common.hours")}</span>
                 </div>
               </div>
               <a href={`/${locale}/admin`} className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium">
@@ -318,11 +311,11 @@ export default function Home() {
             </div>
             
             <h1 className="text-hero gradient-text mb-6 text-balance">
-              {t("home.heroTitle")}
+              {settings?.heroTitle?.[locale] || t("home.heroTitle")}
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              {t("home.heroDesc")}
+              {settings?.heroDesc?.[locale] || t("home.heroDesc")}
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 mb-10">
@@ -331,7 +324,7 @@ export default function Home() {
                   <StarIcon className="text-amber-600 w-6 h-6" />
                 </div>
                 <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">4.9</div>
+                  <div className="font-bold text-gray-900 text-lg">{settings?.ratingValue || "4.9"}</div>
                   <div className="text-gray-600 text-sm">{t("home.rating")}</div>
                 </div>
               </div>
@@ -341,7 +334,7 @@ export default function Home() {
                   <CheckIcon className="text-green-600 w-6 h-6" />
                 </div>
                 <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">500+</div>
+                  <div className="font-bold text-gray-900 text-lg">{settings?.happyCustomers || "500+"}</div>
                   <div className="text-gray-600 text-sm">Happy Customers</div>
                 </div>
               </div>
@@ -351,7 +344,7 @@ export default function Home() {
                   <ClockIcon className="text-blue-600 w-6 h-6" />
                 </div>
                 <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">30-45</div>
+                  <div className="font-bold text-gray-900 text-lg">{settings?.deliveryMinutes || "30-45"}</div>
                   <div className="text-gray-600 text-sm">{t("home.minutes")}</div>
                 </div>
               </div>
@@ -376,13 +369,11 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-section text-gray-900 mb-6">{t("home.aboutTitle")}</h2>
+            <h2 className="text-section text-gray-900 mb-6">{settings?.aboutTitle?.[locale] || t("home.aboutTitle")}</h2>
             <p className="text-lg text-gray-600 leading-relaxed mb-4">
-              {t("home.about1")}
+              {settings?.about1?.[locale] || t("home.about1")}
             </p>
-            <p className="text-lg text-gray-600 leading-relaxed mb-8">
-              {t("home.about2")}
-            </p>
+            {/* Removed secondary about paragraph per request */}
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
               <div className="text-center">
@@ -419,13 +410,13 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-section text-gray-900 mb-4">{t("home.menuTitle")}</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {t("home.menuDesc")}
+              {settings?.menuDesc?.[locale] || t("home.menuDesc")}
             </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {products.map((p, index) => (
-              <div key={p.id} style={{ animationDelay: `${index * 100}ms` }}>
+              <div key={p.id} className="h-full" style={{ animationDelay: `${index * 100}ms` }}>
                 <ProductCard product={p} onAdd={addToCart} t={t} />
               </div>
             ))}
@@ -448,7 +439,7 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-section text-gray-900 mb-4">{t("home.completeOrderTitle")}</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {t("home.completeOrderDesc")}
+              {settings?.completeOrderDesc?.[locale] || t("home.completeOrderDesc")}
             </p>
           </div>
           
@@ -493,7 +484,7 @@ export default function Home() {
                       type="tel"
                       placeholder="+995 5XX XX XX XX" 
                       value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
+                      onChange={(e) => setPhone(formatGeorgianMobileInput(e.target.value))} 
                       className="input-field"
                     />
                   </div>
@@ -583,8 +574,8 @@ export default function Home() {
             {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">K</span>
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg flex items-center justify-center overflow-hidden">
+                  <img src="/logo.png" alt="Khinkalito" className="w-full h-full object-contain rounded-xl bg-white ring-1 ring-white/80 p-0.5" />
                 </div>
                 <div>
                   <div className="font-bold text-xl">{t("common.brand")}</div>
@@ -596,7 +587,7 @@ export default function Home() {
               </p>
               <div className="flex items-center gap-2 text-green-400">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                <span className="font-medium">{t("common.openNow")} • {t("common.deliveringUntil")}</span>
+                <span className="font-medium">{t("common.openNow")} • {t("common.deliveringUntil")} {settings?.deliveringUntil ? `(${settings.deliveringUntil})` : ""}</span>
               </div>
             </div>
             
@@ -606,17 +597,17 @@ export default function Home() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
                   <PhoneIcon className="text-red-400" />
-                  <span>+995 555 123 456</span>
+                  <span>{settings?.phone || "+995 555 123 456"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <LocationIcon className="text-blue-400" />
-                  <span>Tbilisi, Georgia</span>
+                  <span>{settings?.address || "Tbilisi, Georgia"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <ClockIcon className="text-green-400" />
                   <div>
-                    <div>Mon - Sun</div>
-                    <div className="text-sm text-gray-400">{t("common.hours")}</div>
+                    <div>{(settings?.workingDays && settings.workingDays[locale]) || (locale === 'ka' ? "ორშ - კვ" : "Mon - Sun")}</div>
+                    <div className="text-sm text-gray-400">{settings?.hours || t("common.hours")}</div>
                   </div>
                 </div>
               </div>

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {useLocale, useTranslations} from "next-intl";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import enMessages from "../../../messages/en.json";
+import kaMessages from "../../../messages/ka.json";
 
 function DashboardIcon(props) {
   return (
@@ -101,12 +103,23 @@ export default function AdminPage() {
               <ShoppingCartIcon />
               {t("admin.tabs.orders", { default: "Orders" })}
             </button>
+            <button 
+              onClick={() => setTab("settings")} 
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                tab === "settings" 
+                  ? "bg-red-600 text-white shadow-lg transform scale-105" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <span>⚙️</span>
+              Settings
+            </button>
           </nav>
         </div>
 
         {/* Tab Content */}
         <div className="animate-fade-in">
-          {tab === "products" ? <ProductsAdmin /> : <OrdersAdmin />}
+          {tab === "products" ? <ProductsAdmin /> : tab === "orders" ? <OrdersAdmin /> : <SettingsAdmin />}
         </div>
       </div>
     </div>
@@ -727,6 +740,169 @@ function OrdersAdmin() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SettingsAdmin() {
+  const [settings, setSettings] = useState({ phone: "", hours: "", deliveringUntil: "", address: "", city: "", workingDays: { en: "", ka: "" }, ratingValue: "", deliveryMinutes: "", happyCustomers: "", heroTitle: { en: "", ka: "" }, heroDesc: { en: "", ka: "" }, aboutTitle: { en: "", ka: "" }, about1: { en: "", ka: "" }, menuDesc: { en: "", ka: "" }, completeOrderDesc: { en: "", ka: "" } });
+  const [saving, setSaving] = useState(false);
+  const t = useTranslations();
+
+  useEffect(() => {
+    fetch("/api/settings").then((r) => r.json()).then((data) => {
+      const s = data || {};
+      const merged = {
+        ...s,
+        heroTitle: {
+          en: (s.heroTitle && s.heroTitle.en) || enMessages.home.heroTitle,
+          ka: (s.heroTitle && s.heroTitle.ka) || kaMessages.home.heroTitle,
+        },
+        heroDesc: {
+          en: (s.heroDesc && s.heroDesc.en) || enMessages.home.heroDesc,
+          ka: (s.heroDesc && s.heroDesc.ka) || kaMessages.home.heroDesc,
+        },
+        aboutTitle: {
+          en: (s.aboutTitle && s.aboutTitle.en) || enMessages.home.aboutTitle,
+          ka: (s.aboutTitle && s.aboutTitle.ka) || kaMessages.home.aboutTitle,
+        },
+        about1: {
+          en: (s.about1 && s.about1.en) || enMessages.home.about1,
+          ka: (s.about1 && s.about1.ka) || kaMessages.home.about1,
+        },
+        menuDesc: {
+          en: (s.menuDesc && s.menuDesc.en) || enMessages.home.menuDesc,
+          ka: (s.menuDesc && s.menuDesc.ka) || kaMessages.home.menuDesc,
+        },
+        completeOrderDesc: {
+          en: (s.completeOrderDesc && s.completeOrderDesc.en) || enMessages.home.completeOrderDesc,
+          ka: (s.completeOrderDesc && s.completeOrderDesc.ka) || kaMessages.home.completeOrderDesc,
+        },
+        workingDays: {
+          en: (s.workingDays && s.workingDays.en) || "Mon - Sun",
+          ka: (s.workingDays && s.workingDays.ka) || "ორშ - კვ",
+        },
+      };
+      setSettings(merged);
+    });
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings) });
+      const data = await res.json();
+      setSettings(data);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="card">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Site Settings</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+              <input className="input-field" value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} placeholder="+995 555 123 456" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Working Hours</label>
+              <input className="input-field" value={settings.hours} onChange={(e) => setSettings({ ...settings, hours: e.target.value })} placeholder="11:00 - 23:00" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Delivering Until</label>
+              <input className="input-field" value={settings.deliveringUntil} onChange={(e) => setSettings({ ...settings, deliveringUntil: e.target.value })} placeholder="23:00" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+              <input className="input-field" value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} placeholder="Tbilisi, Georgia" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+              <input className="input-field" value={settings.city} onChange={(e) => setSettings({ ...settings, city: e.target.value })} placeholder="Tbilisi" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+              <input className="input-field" value={settings.ratingValue} onChange={(e) => setSettings({ ...settings, ratingValue: e.target.value })} placeholder="4.9" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Minutes</label>
+              <input className="input-field" value={settings.deliveryMinutes} onChange={(e) => setSettings({ ...settings, deliveryMinutes: e.target.value })} placeholder="30-45" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Happy Customers</label>
+              <input className="input-field" value={settings.happyCustomers} onChange={(e) => setSettings({ ...settings, happyCustomers: e.target.value })} placeholder="500+" />
+            </div>
+          </div>
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card">
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900">Homepage Texts (EN)</h3>
+                <label className="block text-sm font-medium text-gray-700">Hero Title</label>
+                <input className="input-field" value={settings.heroTitle?.en || ""} onChange={(e) => setSettings({ ...settings, heroTitle: { ...(settings.heroTitle||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">Hero Description</label>
+                <textarea className="input-field h-24 resize-none" value={settings.heroDesc?.en || ""} onChange={(e) => setSettings({ ...settings, heroDesc: { ...(settings.heroDesc||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">About Title</label>
+                <input className="input-field" value={settings.aboutTitle?.en || ""} onChange={(e) => setSettings({ ...settings, aboutTitle: { ...(settings.aboutTitle||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">About Text</label>
+                <textarea className="input-field h-24 resize-none" value={settings.about1?.en || ""} onChange={(e) => setSettings({ ...settings, about1: { ...(settings.about1||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">Menu Description</label>
+                <textarea className="input-field h-24 resize-none" value={settings.menuDesc?.en || ""} onChange={(e) => setSettings({ ...settings, menuDesc: { ...(settings.menuDesc||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">Checkout Description</label>
+                <textarea className="input-field h-24 resize-none" value={settings.completeOrderDesc?.en || ""} onChange={(e) => setSettings({ ...settings, completeOrderDesc: { ...(settings.completeOrderDesc||{}), en: e.target.value } })} />
+              </div>
+            </div>
+            <div className="card">
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900">Homepage Texts (KA)</h3>
+                <label className="block text-sm font-medium text-gray-700">ჰერო სათაური</label>
+                <input className="input-field" value={settings.heroTitle?.ka || ""} onChange={(e) => setSettings({ ...settings, heroTitle: { ...(settings.heroTitle||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">ჰერო აღწერა</label>
+                <textarea className="input-field h-24 resize-none" value={settings.heroDesc?.ka || ""} onChange={(e) => setSettings({ ...settings, heroDesc: { ...(settings.heroDesc||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">აბაუთ სათაური</label>
+                <input className="input-field" value={settings.aboutTitle?.ka || ""} onChange={(e) => setSettings({ ...settings, aboutTitle: { ...(settings.aboutTitle||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">აბაუთ ტექსტი</label>
+                <textarea className="input-field h-24 resize-none" value={settings.about1?.ka || ""} onChange={(e) => setSettings({ ...settings, about1: { ...(settings.about1||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">მენიუს აღწერა</label>
+                <textarea className="input-field h-24 resize-none" value={settings.menuDesc?.ka || ""} onChange={(e) => setSettings({ ...settings, menuDesc: { ...(settings.menuDesc||{}), ka: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">შეკვეთის აღწერა</label>
+                <textarea className="input-field h-24 resize-none" value={settings.completeOrderDesc?.ka || ""} onChange={(e) => setSettings({ ...settings, completeOrderDesc: { ...(settings.completeOrderDesc||{}), ka: e.target.value } })} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card">
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900">Footer (EN)</h3>
+                <label className="block text-sm font-medium text-gray-700">Working Days</label>
+                <input className="input-field" value={settings.workingDays?.en || ""} onChange={(e) => setSettings({ ...settings, workingDays: { ...(settings.workingDays||{}), en: e.target.value } })} />
+                <label className="block text-sm font-medium text-gray-700">Address</label>
+                <input className="input-field" value={settings.address || ""} onChange={(e) => setSettings({ ...settings, address: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input className="input-field" value={settings.phone || ""} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700">Hours</label>
+                <input className="input-field" value={settings.hours || ""} onChange={(e) => setSettings({ ...settings, hours: e.target.value })} />
+              </div>
+            </div>
+            <div className="card">
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900">Footer (KA)</h3>
+                <label className="block text-sm font-medium text-gray-700">სამუშაო დღეები</label>
+                <input className="input-field" value={settings.workingDays?.ka || ""} onChange={(e) => setSettings({ ...settings, workingDays: { ...(settings.workingDays||{}), ka: e.target.value } })} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-6">
+            <button onClick={save} disabled={saving} className="btn-primary">
+              {saving ? "Saving..." : "Save Settings"}
+            </button>
+          </div>
+        </div>
+      </div>
+      
     </div>
   );
 }
