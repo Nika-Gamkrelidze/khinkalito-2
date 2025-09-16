@@ -252,12 +252,12 @@ export default function Home() {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-gray-900">{t("common.brand")}</span>
-                <span className="text-xs text-gray-500 hidden sm:block">{t("common.tagline")}</span>
+                <span className="text-xs text-gray-500 hidden md:block">{t("common.tagline")}</span>
               </div>
             </div>
 
             {/* Contact Info - Hidden on mobile */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-8">
               <div className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <PhoneIcon className="text-red-600" />
                 <span className="font-medium">{settings?.phone || "+995 555 123 456"}</span>
@@ -280,7 +280,7 @@ export default function Home() {
                 className="relative btn-primary hover:scale-105 transition-all duration-200"
               >
                 <CartIcon />
-                <span className="hidden sm:inline">{t("common.cart")}</span>
+                <span className="hidden md:inline">{t("common.cart")}</span>
                 {detailedCart.length > 0 && (
                   <span className="absolute -top-2 -right-2 h-6 w-6 bg-amber-400 text-red-800 text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
                     {detailedCart.length}
@@ -299,7 +299,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
         </div>
         
-        <div className="relative container mx-auto py-20 lg:py-28">
+        <div className="relative container mx-auto py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
             <div className="mb-6">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-medium border border-red-200">
@@ -412,7 +412,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8">
             {products.map((p, index) => (
               <div key={p.id} className="h-full" style={{ animationDelay: `${index * 100}ms` }}>
                 <ProductCard product={p} onAdd={addToCart} t={t} />
@@ -441,7 +441,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 md:gap-12">
             {/* Order Form */}
             <div className="card card-elevated animate-fade-in">
               <div className="p-8">
@@ -453,7 +453,7 @@ export default function Home() {
                 </div>
                 
                 <div className="space-y-4 mb-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{t("home.firstName")}</label>
                       <input 
