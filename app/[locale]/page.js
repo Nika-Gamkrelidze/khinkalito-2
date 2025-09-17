@@ -22,13 +22,7 @@ function ClockIcon(props) {
   );
 }
 
-function StarIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden {...props}>
-      <path d="M11.48 2.5a.6.6 0 0 1 1.04 0l2.47 4.73 5.24.76a.6.6 0 0 1 .33 1.02l-3.79 3.7.9 5.22a.6.6 0 0 1-.87.63L12 16.91l-4.69 2.46a.6.6 0 0 1-.87-.63l.9-5.22-3.79-3.7a.6.6 0 0 1 .33-1.02l5.24-.76 2.48-4.73Z"/>
-    </svg>
-  );
-}
+ 
 
 function CartIcon(props) {
   return (
@@ -357,37 +351,7 @@ export default function Home() {
               {settings?.heroDesc?.[locale] || t("home.heroDesc")}
             </p>
             
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8 md:mb-10">
-              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <StarIcon className="text-amber-600 w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">{settings?.ratingValue || "4.9"}</div>
-                  <div className="text-gray-600 text-sm">{t("home.rating")}</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <CheckIcon className="text-green-600 w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">{settings?.happyCustomers || "500+"}</div>
-                  <div className="text-gray-600 text-sm">Happy Customers</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <ClockIcon className="text-blue-600 w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-gray-900 text-lg">{settings?.deliveryMinutes || "30-45"}</div>
-                  <div className="text-gray-600 text-sm">{t("home.minutes")}</div>
-                </div>
-              </div>
-            </div>
+            {/* Stats cards removed as requested */}
             
             <button 
               onClick={() => document.getElementById('menu').scrollIntoView({ behavior: 'smooth' })}
