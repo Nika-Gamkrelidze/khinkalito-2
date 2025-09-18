@@ -21,7 +21,8 @@
 		"hours": "11:00 - 23:00",
 		"openNow": "Open Now",
 		"deliveringUntil": "Delivering until 23:00",
-		"nowDelivering": "Now delivering in Tbilisi"
+		"nowDelivering": "Now delivering in Tbilisi",
+		"onOrdersOver": "on orders over"
 	},
 	"home": {
 		"heroTitle": "Authentic Georgian Khinkali",

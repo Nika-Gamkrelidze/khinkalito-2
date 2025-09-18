@@ -934,8 +934,9 @@ function OrdersAdmin() {
 }
 
 function SettingsAdmin() {
-  const [settings, setSettings] = useState({ phone: "", hours: "", deliveringUntil: "", address: "", city: "", workingDays: { en: "", ka: "" }, ratingValue: "", deliveryMinutes: "", happyCustomers: "", heroTitle: { en: "", ka: "" }, heroDesc: { en: "", ka: "" }, aboutTitle: { en: "", ka: "" }, about1: { en: "", ka: "" }, menuDesc: { en: "", ka: "" }, completeOrderDesc: { en: "", ka: "" } });
+  const [settings, setSettings] = useState({ phone: "", hours: "", deliveringUntil: "", address: "", city: "", workingDays: { en: "", ka: "" }, ratingValue: "", deliveryMinutes: "", happyCustomers: "", heroImage: null, freeDeliveryThreshold: 0, heroTitle: { en: "", ka: "" }, heroDesc: { en: "", ka: "" }, aboutTitle: { en: "", ka: "" }, about1: { en: "", ka: "" }, menuDesc: { en: "", ka: "" }, completeOrderDesc: { en: "", ka: "" } });
   const [saving, setSaving] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const t = useTranslations();
 
   useEffect(() => {
@@ -943,6 +944,7 @@ function SettingsAdmin() {
       const s = data || {};
       const merged = {
         ...s,
+        freeDeliveryThreshold: Number.isFinite(Number(s.freeDeliveryThreshold)) ? Number(s.freeDeliveryThreshold) : 0,
         heroTitle: {
           en: (s.heroTitle && s.heroTitle.en) || enMessages.home.heroTitle,
           ka: (s.heroTitle && s.heroTitle.ka) || kaMessages.home.heroTitle,
@@ -987,6 +989,55 @@ function SettingsAdmin() {
     }
   }
 
+  async function setAndPersist(partial) {
+    const next = { ...settings, ...partial };
+    try {
+      setSaving(true);
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+      const data = await res.json();
+      setSettings(data);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadHeroImage(file) {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      setUploadingHero(true);
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        alert(err.error || "Failed to upload image");
+        return;
+      }
+      const result = await response.json();
+      await setAndPersist({ heroImage: result.url });
+    } catch (e) {
+      console.error(e);
+      alert("Failed to upload image");
+    } finally {
+      setUploadingHero(false);
+    }
+  }
+
+  async function removeHeroImage() {
+    if (!settings?.heroImage) return;
+    if (!confirm("Remove hero image?")) return;
+    const filename = settings.heroImage.split('/').pop();
+    try {
+      setUploadingHero(true);
+      await fetch(`/api/upload?filename=${filename}`, { method: "DELETE" });
+    } catch (e) {
+      // ignore delete failure; still clear reference
+    } finally {
+      setUploadingHero(false);
+      await setAndPersist({ heroImage: null });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="card">
@@ -1024,6 +1075,52 @@ function SettingsAdmin() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Happy Customers</label>
               <input className="input-field" value={settings.happyCustomers} onChange={(e) => setSettings({ ...settings, happyCustomers: e.target.value })} placeholder="500+" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Free Delivery Threshold (₾)</label>
+              <input 
+                type="number"
+                min="0"
+                step="1"
+                className="input-field"
+                value={settings.freeDeliveryThreshold}
+                onChange={(e) => setSettings({ ...settings, freeDeliveryThreshold: Number(e.target.value) })}
+                placeholder="0 (disabled)"
+              />
+            </div>
+          </div>
+          <div className="mt-6">
+            <div className="card">
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Homepage Hero Image</h3>
+                {settings.heroImage ? (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <img src={settings.heroImage} alt="Hero" className="w-full h-48 object-cover rounded-lg border border-gray-200" />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <label className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
+                          📷
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadHeroImage(file); }} disabled={uploadingHero} />
+                        </label>
+                        <button onClick={removeHeroImage} className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">×</button>
+                      </div>
+                    </div>
+                    {uploadingHero && <div className="text-sm text-gray-600">Uploading...</div>}
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="space-y-2">
+                      <div className="mx-auto w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center"><span className="text-2xl">📷</span></div>
+                      <div className="text-sm text-gray-600">
+                        <label htmlFor="hero-image-upload" className="cursor-pointer text-red-600 hover:text-red-700 font-medium">Click to upload hero image</label>
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                    </div>
+                    <input id="hero-image-upload" type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadHeroImage(file); }} className="hidden" disabled={uploadingHero} />
+                    {uploadingHero && (<div className="text-center py-2"><span className="text-sm text-gray-600">Uploading...</span></div>)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">

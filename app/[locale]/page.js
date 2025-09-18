@@ -17,7 +17,8 @@ function PhoneIcon(props) {
 function ClockIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
-      <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm1-10.59V7a1 1 0 1 0-2 0v5a1 1 0 0 0 .29.71l3 3a1 1 0 1 0 1.42-1.42L13 11.41Z" fill="currentColor"/>
+      <path d="M3 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7H3V7Zm12 2h2.586a2 2 0 0 1 1.414.586L21.414 12A2 2 0 0 1 22 13.414V16a2 2 0 0 1-2 2h-1" fill="currentColor"/>
+      <path d="M7.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm9.5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="currentColor"/>
     </svg>
   );
 }
@@ -82,7 +83,7 @@ function ProductCard({ product, onAdd, t }) {
   
   return (
     <div className="card animate-fade-in group h-full flex flex-col">
-      <div className="relative h-48 bg-gradient-to-br from-red-50 via-amber-50 to-orange-50 overflow-hidden">
+      <div className="relative h-44 md:h-64 bg-gradient-to-br from-red-50 via-amber-50 to-orange-50 overflow-hidden">
         {product.image ? (
           <img 
             src={product.image} 
@@ -105,20 +106,22 @@ function ProductCard({ product, onAdd, t }) {
         
         <div className="mt-auto space-y-3">
           <div className="text-sm font-medium text-gray-700">Size Options:</div>
-          <div className="flex gap-2">
+          <div className="flex gap-3 md:gap-10">
             {product.sizes.map((s) => (
               <button
                 key={s.sizeKg}
                 onClick={() => setSize(s.sizeKg)}
-                className={`flex-1 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   size === s.sizeKg 
-                    ? "bg-red-600 text-white border-red-600 shadow-md transform scale-105" 
-                    : "bg-white text-gray-700 border-gray-200 hover:border-red-300 hover:bg-red-50"
+                    ? "size-option--active transform scale-105" 
+                    : "size-option"
                 }`}
               >
-                <div className="text-xs opacity-80">{s.sizeKg === 0.5 ? "Small" : "Large"}</div>
-                <div className="font-semibold">{s.sizeKg}kg</div>
-                <div className="text-xs">{s.price.toFixed(0)} ₾</div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between md:gap-3 w-full">
+                  <span className="text-[10px] md:text-xs opacity-70 md:opacity-80">{s.sizeKg === 0.5 ? "Small" : "Large"}</span>
+                  <span className="font-semibold text-xs md:text-sm">{s.sizeKg}kg</span>
+                  <span className="text-[10px] md:text-xs">{s.price.toFixed(0)} ₾</span>
+                </div>
               </button>
             ))}
           </div>
@@ -127,10 +130,10 @@ function ProductCard({ product, onAdd, t }) {
         <div className="pt-2">
           <button 
             onClick={() => onAdd(product.id, selected.sizeKg)} 
-            className="btn-primary w-full justify-center text-base font-semibold py-3 hover:scale-105 transition-transform duration-200"
+            className="btn-primary w-full justify-center text-xs md:text-base font-semibold py-2.5 md:py-3 hover:scale-105 transition-transform duration-200"
           >
             <CartIcon />
-            {t("common.cart")} — {selected.price.toFixed(0)} ₾
+            <span className="text-2xs md:text-base">{t("common.cart")} {selected.price.toFixed(0)}₾</span>
           </button>
         </div>
       </div>
@@ -155,11 +158,16 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const geocodeTimeoutRef = useRef(null);
   const geocodeSeqRef = useRef(0);
+  const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/settings").then((r) => r.json()).then(setSettings);
   }, []);
+
+  useEffect(() => {
+    setHeroLoaded(false);
+  }, [settings?.heroImage]);
 
   // Debounced geocoding of typed address -> update map pin
   useEffect(() => {
@@ -298,7 +306,7 @@ export default function Home() {
                 <span className="font-medium">{settings?.phone || "+995 555 123 456"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
-                <ClockIcon className="text-green-600" />
+                <ClockIcon className="text-gray-500" />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{t("common.openDaily")}</span>
                   <span className="text-xs">{settings?.hours || t("common.hours")}</span>
@@ -330,8 +338,20 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-4 md:py-6">
         <div className="absolute inset-0">
+          {/* Placeholder while loading or when no image set */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+          {/* Hero image fades in when loaded; tinted low opacity */}
+          {settings?.heroImage && (
+            <img
+              src={settings.heroImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              style={{ opacity: heroLoaded ? 0.15 : 0 }}
+              onLoad={() => setHeroLoaded(true)}
+            />
+          )}
+          {/* Overlay tint */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-amber-600/20" />
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
         </div>
         
         <div className="relative container mx-auto py-12 md:py-24">
@@ -363,9 +383,7 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-red-200 rounded-full opacity-20 animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-32 h-32 bg-amber-200 rounded-full opacity-20 animate-pulse" />
+        
       </section>
 
       {/* About Section */}
@@ -378,7 +396,7 @@ export default function Home() {
             </p>
             {/* Removed secondary about paragraph per request */}
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div className="grid grid-cols-3 gap-8 mt-12">
               <div className="text-center">
                 <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <HeartIcon className="w-8 h-8 text-red-600" />
@@ -417,7 +435,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {products.map((p, index) => (
               <div key={p.id} className="h-full" style={{ animationDelay: `${index * 100}ms` }}>
                 <ProductCard product={p} onAdd={addToCart} t={t} />
@@ -516,12 +534,16 @@ export default function Home() {
                 </div>
                 
                 <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                    <CheckIcon className="w-4 h-4 text-green-600" />
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <CheckIcon className="w-4 h-4 text-green-600" />
+                  {settings?.freeDeliveryThreshold && settings.freeDeliveryThreshold > 0 ? (
+                    <span>{t("common.free")} {t("common.delivery")} {t("common.onOrdersOver")} {settings.freeDeliveryThreshold} ₾</span>
+                  ) : (
                     <span>{t("home.freeDelivery")}</span>
-                  </div>
+                  )}
+                </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <ClockIcon className="w-4 h-4 text-blue-600" />
+                    <ClockIcon className="w-4 h-4 text-gray-500" />
                     <span>{t("home.eta")}</span>
                   </div>
                 </div>
@@ -558,22 +580,21 @@ export default function Home() {
             
             {/* Map */}
             <div className="card animate-fade-in">
-              <div className="p-3 md:p-4">
+              <div className="p-3 md:p-4 md:h-[520px] flex flex-col">
                 <div className="flex items-center gap-3 mb-4">
                   <LocationIcon className="w-6 h-6 text-blue-600" />
                   <h3 className="text-base md:text-lg font-bold text-gray-900">{t("home.selectLocation")}</h3>
                 </div>
-                <MapPicker 
-                  value={location} 
-                  onChange={setLocation} 
-                  onAddress={(text) => {
-                    setLastAddressUpdateFromMap(true);
-                    setAddressText(text);
-                  }} 
-                  height={320} 
-                />
-                <div className="text-sm text-gray-500 mt-3 p-3 bg-blue-50 rounded-lg">
-                  💡 {t("home.mapTip")}
+                <div className="h-[320px] md:flex-1">
+                  <MapPicker 
+                    value={location} 
+                    onChange={setLocation} 
+                    onAddress={(text) => {
+                      setLastAddressUpdateFromMap(true);
+                      setAddressText(text);
+                    }} 
+                    height="100%" 
+                  />
                 </div>
               </div>
             </div>
@@ -618,7 +639,7 @@ export default function Home() {
                   <span>{settings?.address || "Tbilisi, Georgia"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
-                  <ClockIcon className="text-green-400" />
+                  <ClockIcon className="text-gray-400" />
                   <div>
                     <div>{(settings?.workingDays && settings.workingDays[locale]) || (locale === 'ka' ? "ორშ - კვ" : "Mon - Sun")}</div>
                     <div className="text-sm text-gray-400">{settings?.hours || t("common.hours")}</div>

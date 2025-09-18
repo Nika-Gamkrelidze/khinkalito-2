@@ -21,7 +21,8 @@
 		"hours": "11:00 - 23:00",
 		"openNow": "ახლა ღიაა",
 		"deliveringUntil": "მიწოდება 23:00-მდე",
-		"nowDelivering": "მიწოდება თბილისში"
+		"nowDelivering": "მიწოდება თბილისში",
+		"onOrdersOver": "შეკვეთისგან მეტი ვიდრე"
 	},
 	"home": {
 		"heroTitle": "ავთენტური ქართული ხინკალი",
