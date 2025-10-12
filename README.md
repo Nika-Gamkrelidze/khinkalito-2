@@ -37,23 +37,73 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Environment and Database
 
-Create a `.env` file with at least:
+We use Prisma + PostgreSQL (Supabase). Create a `.env` with:
 
 ```
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME?schema=public
-# Optional shadow DB for "prisma migrate dev"
-# SHADOW_DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/SHADOW_DB?schema=public
+# Supabase Postgres URLs
+POSTGRES_PRISMA_URL=postgres://postgres:...@<pooler-host>:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
+POSTGRES_URL_NON_POOLING=postgres://postgres:...@<db-host>:5432/postgres?sslmode=require
 
+# App secrets
 ADMIN_SECRET=change-me
+
+# Optional
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 ```
 
 Prisma commands:
 
 ```
+# Generate client
 npm run prisma:generate
-npm run prisma:migrate
+
+# Create and apply a migration to your dev DB
+npx prisma migrate dev --name <change>
+
+# Seed dev data (reads prisma/seed.js)
 npm run prisma:seed
 ```
 
-On Vercel, set `DATABASE_URL` (and optionally `ADMIN_SECRET`) in Project Settings → Environment Variables, and ensure the build step runs database migrations (e.g. `prisma migrate deploy && next build`).
+Deployment on Vercel:
+- Project Settings → Environment Variables (Production): set `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `ADMIN_SECRET` (and public Supabase keys if used).
+- Build Command: `npm run vercel-build` (package.json runs `prisma migrate deploy && next build --turbopack`).
+
+## Architecture Overview
+
+- UI: Next.js App Router. Public site lives under `app/[locale]/*`; admin at `app/[locale]/admin`.
+- i18n: `next-intl` via `app/[locale]/layout.js`.
+- Data access: Prisma Client from `lib/prisma.js`.
+  - Local dev prefers the non-pooled URL (5432) to avoid pooler issues.
+  - Production uses the pooled URL (6543) for efficient serverless connections.
+- Database models (`prisma/schema.prisma`):
+  - `User { id, username, passwordHash, role, createdAt }`
+  - `Product { id, name Json, description Json, image, active, createdAt, sizes[] }`
+  - `ProductSize { productId -> Product, sizeKg Float, price Int }`
+  - `Setting { key, value Json }`
+  - `Order { id, createdAt, status, customer Json, address Json, items Json, total Int }`
+- API routes (server actions/route handlers):
+  - `/api/products` CRUD via Prisma (`Product` + `ProductSize`)
+  - `/api/orders` create/list/update via Prisma (`Order`)
+  - `/api/settings` key/value via Prisma (`Setting`)
+  - `/api/users` admin-only CRUD via Prisma (`User`)
+  - `/api/auth/*` cookie-based admin session using `lib/auth.js`
+
+## Local Development Tips
+
+- If Prisma client regeneration fails on Windows with EPERM, close dev server, then:
+
+```
+Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
+Remove-Item -Recurse -Force .\node_modules\.prisma -ErrorAction SilentlyContinue
+npm run prisma:generate
+```
+
+- To reset your dev DB quickly:
+
+```
+npx prisma migrate reset --force
+npx prisma migrate dev --name init
+npm run prisma:seed
+```
