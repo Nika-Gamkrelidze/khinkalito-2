@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrders, saveOrders, getProducts, ensureSeedData } from "@/lib/storage";
+import prisma from "@/lib/prisma";
 import { isValidGeorgianMobile } from "@/lib/phone";
 import { requireAdmin } from "@/lib/auth";
 
@@ -7,13 +7,12 @@ export async function GET(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  const orders = getOrders();
-  const filtered = status ? orders.filter((o) => o.status === status) : orders;
-  return NextResponse.json(filtered);
+  const where = status ? { status } : {};
+  const orders = await prisma.order.findMany({ where, orderBy: { createdAt: "desc" } });
+  return NextResponse.json(orders);
 }
 
 export async function POST(request) {
-  ensureSeedData();
   const body = await request.json();
   const { firstName, lastName, phone, addressText, location, items } = body;
 
@@ -30,11 +29,15 @@ export async function POST(request) {
     return NextResponse.json({ error: "No items" }, { status: 400 });
   }
 
-  const products = getProducts();
+  const productIds = Array.from(new Set(items.map((it) => it.productId)));
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    include: { sizes: true },
+  });
   const detailedItems = items.map((it) => {
     const product = products.find((p) => p.id === it.productId);
     if (!product) throw new Error("Product not found");
-    const size = product.sizes.find((s) => s.sizeKg === it.sizeKg);
+    const size = product.sizes.find((s) => s.sizeKg === Number(it.sizeKg));
     if (!size) throw new Error("Size not found");
     const quantity = Math.max(1, Number(it.quantity || 1));
     const price = size.price * quantity;
@@ -45,31 +48,28 @@ export async function POST(request) {
       sizeKg: size.sizeKg,
       unitPrice: size.price,
       quantity,
-      lineTotal: price
+      lineTotal: price,
     };
   });
 
   const total = detailedItems.reduce((sum, i) => sum + i.lineTotal, 0);
 
-  const orders = getOrders();
-  const newOrder = {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    status: "pending",
-    customer: {
-      firstName: String(firstName),
-      lastName: String(lastName),
-      phone,
+  const newOrder = await prisma.order.create({
+    data: {
+      status: "pending",
+      customer: {
+        firstName: String(firstName),
+        lastName: String(lastName),
+        phone,
+      },
+      address: {
+        text: addressText || "",
+        location: location || null,
+      },
+      items: detailedItems,
+      total,
     },
-    address: {
-      text: addressText || "",
-      location: location || null
-    },
-    items: detailedItems,
-    total
-  };
-  orders.push(newOrder);
-  saveOrders(orders);
+  });
   return NextResponse.json(newOrder, { status: 201 });
 }
 
@@ -78,12 +78,12 @@ export async function PUT(request) {
   const body = await request.json();
   const { id, status } = body;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  const orders = getOrders();
-  const idx = orders.findIndex((o) => o.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (status) orders[idx].status = status;
-  saveOrders(orders);
-  return NextResponse.json(orders[idx]);
+  try {
+    const updated = await prisma.order.update({ where: { id }, data: { status } });
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 }
 
 

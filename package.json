@@ -6,9 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "node --experimental-json-modules prisma/seed.js",
+    "vercel-build": "prisma migrate deploy && next build --turbopack"
   },
   "dependencies": {
+    "@prisma/client": "^6.17.1",
     "@react-google-maps/api": "^2.20.7",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
@@ -24,6 +29,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
+    "prisma": "^6.17.1",
     "tailwindcss": "^4"
   }
 }

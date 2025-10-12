@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUsers } from "@/lib/storage";
+import prisma from "@/lib/prisma";
 import { verifyPassword, createSessionValue, buildSessionCookieHeader } from "@/lib/auth";
 
 export async function POST(request) {
@@ -7,8 +7,7 @@ export async function POST(request) {
   if (!username || !password) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
   }
-  const users = getUsers();
-  const user = users.find((u) => u.username.toLowerCase() === String(username).toLowerCase());
+  const user = await prisma.user.findUnique({ where: { username: String(username) } });
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
   }

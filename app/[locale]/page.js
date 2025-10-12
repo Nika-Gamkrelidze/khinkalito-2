@@ -2,9 +2,16 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import {useTranslations, useLocale} from "next-intl";
-import MapPicker from "@/components/MapPicker";
+import dynamic from "next/dynamic";
 import { isValidGeorgianMobile, formatGeorgianMobileInput } from "@/lib/phone";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+const MapPicker = dynamic(() => import("@/components/MapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Loading map...</div>
+  ),
+});
 
 function PhoneIcon(props) {
   return (
@@ -159,6 +166,7 @@ export default function Home() {
   const geocodeTimeoutRef = useRef(null);
   const geocodeSeqRef = useRef(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [year, setYear] = useState(null);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
@@ -168,6 +176,10 @@ export default function Home() {
   useEffect(() => {
     setHeroLoaded(false);
   }, [settings?.heroImage]);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   // Debounced geocoding of typed address -> update map pin
   useEffect(() => {
@@ -663,7 +675,7 @@ export default function Home() {
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} {t("common.brand")}. All rights reserved. Made with{" "}
+              © {year ?? ""} {t("common.brand")}. All rights reserved. Made with{" "}
               <HeartIcon className="inline w-4 h-4 text-red-400 mx-1" />
               {t("common.madeInGeorgia")}
             </p>

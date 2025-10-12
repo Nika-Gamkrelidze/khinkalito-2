@@ -34,3 +34,26 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Environment and Database
+
+Create a `.env` file with at least:
+
+```
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME?schema=public
+# Optional shadow DB for "prisma migrate dev"
+# SHADOW_DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/SHADOW_DB?schema=public
+
+ADMIN_SECRET=change-me
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+```
+
+Prisma commands:
+
+```
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+On Vercel, set `DATABASE_URL` (and optionally `ADMIN_SECRET`) in Project Settings → Environment Variables, and ensure the build step runs database migrations (e.g. `prisma migrate deploy && next build`).
