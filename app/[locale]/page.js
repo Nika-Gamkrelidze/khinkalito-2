@@ -9,7 +9,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 const MapPicker = dynamic(() => import("@/components/MapPicker"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">Loading map...</div>
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-4 border-gray-200 border-t-red-500 animate-spin" aria-label="Loading map" />
+    </div>
   ),
 });
 
@@ -65,6 +67,18 @@ function HeartIcon(props) {
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
   );
+}
+
+function Skeleton({ className = "" }) {
+  return <div className={`bg-gray-200 animate-pulse rounded ${className}`} />;
+}
+
+function LineSkeleton({ width = "w-24", className = "" }) {
+  return <div className={`h-4 ${width} bg-gray-200 animate-pulse rounded ${className}`} />;
+}
+
+function InlineSkeleton({ width = "w-16", className = "" }) {
+  return <span className={`inline-block align-middle bg-gray-200 animate-pulse rounded h-3 ${width} ${className}`} />;
 }
 
 function getProductName(product, locale) {
@@ -315,13 +329,21 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-8">
               <div className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <PhoneIcon className="text-red-600" />
-                <span className="font-medium">{settings?.phone || "+995 555 123 456"}</span>
+                {settings?.phone ? (
+                  <span className="font-medium">{settings.phone}</span>
+                ) : (
+                  <LineSkeleton width="w-28" />
+                )}
               </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <ClockIcon className="text-gray-500" />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{t("common.openDaily")}</span>
-                  <span className="text-xs">{settings?.hours || t("common.hours")}</span>
+                  {settings?.hours ? (
+                    <span className="text-xs">{settings.hours}</span>
+                  ) : (
+                    <div className="mt-1"><LineSkeleton width="w-20" /></div>
+                  )}
                 </div>
               </div>
               {/* Admin link removed to keep admin panel hidden from UI */}
@@ -375,13 +397,26 @@ export default function Home() {
               </span>
             </div>
             
-            <h1 className="text-hero gradient-text mb-4 md:mb-6 text-balance">
-              {settings?.heroTitle?.[locale] || t("home.heroTitle")}
-            </h1>
+            {settings?.heroTitle?.[locale] ? (
+              <h1 className="text-hero gradient-text mb-4 md:mb-6 text-balance">
+                {settings.heroTitle[locale]}
+              </h1>
+            ) : (
+              <div className="mb-4 md:mb-6 flex justify-center">
+                <Skeleton className="h-10 w-3/4 md:w-2/3" />
+              </div>
+            )}
             
-            <p className="text-base md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
-              {settings?.heroDesc?.[locale] || t("home.heroDesc")}
-            </p>
+            {settings?.heroDesc?.[locale] ? (
+              <p className="text-base md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
+                {settings.heroDesc[locale]}
+              </p>
+            ) : (
+              <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            )}
             
             {/* Stats cards removed as requested */}
             
@@ -402,10 +437,21 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-section text-gray-900 mb-6">{settings?.aboutTitle?.[locale] || t("home.aboutTitle")}</h2>
-            <p className="text-lg text-gray-600 leading-relaxed mb-4">
-              {settings?.about1?.[locale] || t("home.about1")}
-            </p>
+            {settings?.aboutTitle?.[locale] ? (
+              <h2 className="text-section text-gray-900 mb-6">{settings.aboutTitle[locale]}</h2>
+            ) : (
+              <div className="mb-6 flex justify-center"><Skeleton className="h-8 w-2/3" /></div>
+            )}
+            {settings?.about1?.[locale] ? (
+              <p className="text-lg text-gray-600 leading-relaxed mb-4">
+                {settings.about1[locale]}
+              </p>
+            ) : (
+              <div className="mb-4">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+            )}
             {/* Removed secondary about paragraph per request */}
             
             <div className="grid grid-cols-3 gap-8 mt-12">
@@ -442,9 +488,16 @@ export default function Home() {
         <div className="container mx-auto">
           <div className="text-center mb-8 md:mb-12">
             <h2 className="text-section text-gray-900 mb-3 md:mb-4">{t("home.menuTitle")}</h2>
-            <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-              {settings?.menuDesc?.[locale] || t("home.menuDesc")}
-            </p>
+            {settings?.menuDesc?.[locale] ? (
+              <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+                {settings.menuDesc[locale]}
+              </p>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
@@ -456,11 +509,21 @@ export default function Home() {
           </div>
           
           {products.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <CartIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-500">{t("home.loading")}</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="card h-full">
+                  <div className="relative h-44 md:h-64 overflow-hidden rounded-t-xl">
+                    <Skeleton className="absolute inset-0" />
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <div className="mt-4">
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -471,9 +534,16 @@ export default function Home() {
         <div className="container mx-auto">
           <div className="text-center mb-8 md:mb-12">
             <h2 className="text-section text-gray-900 mb-3 md:mb-4">{t("home.completeOrderTitle")}</h2>
-            <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-              {settings?.completeOrderDesc?.[locale] || t("home.completeOrderDesc")}
-            </p>
+            {settings?.completeOrderDesc?.[locale] ? (
+              <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+                {settings.completeOrderDesc[locale]}
+              </p>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            )}
           </div>
           
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 md:gap-12">
@@ -634,7 +704,14 @@ export default function Home() {
               </p>
               <div className="flex items-center gap-2 text-green-400">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                <span className="font-medium">{t("common.openNow")} • {t("common.deliveringUntil")} {settings?.deliveringUntil ? `(${settings.deliveringUntil})` : ""}</span>
+                <span className="font-medium">
+                  {t("common.openNow")} • {t("common.deliveringUntil")} {" "}
+                  {settings?.deliveringUntil ? (
+                    `(${settings.deliveringUntil})`
+                  ) : (
+                    <InlineSkeleton width="w-16" />
+                  )}
+                </span>
               </div>
             </div>
             
@@ -644,17 +721,25 @@ export default function Home() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
                   <PhoneIcon className="text-red-400" />
-                  <span>{settings?.phone || "+995 555 123 456"}</span>
+                  {settings?.phone ? <span>{settings.phone}</span> : <LineSkeleton width="w-28" />}
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <LocationIcon className="text-blue-400" />
-                  <span>{settings?.address || "Tbilisi, Georgia"}</span>
+                  {settings?.address ? <span>{settings.address}</span> : <LineSkeleton width="w-36" />}
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <ClockIcon className="text-gray-400" />
                   <div>
-                    <div>{(settings?.workingDays && settings.workingDays[locale]) || (locale === 'ka' ? "ორშ - კვ" : "Mon - Sun")}</div>
-                    <div className="text-sm text-gray-400">{settings?.hours || t("common.hours")}</div>
+                    {settings?.workingDays?.[locale] ? (
+                      <div>{settings.workingDays[locale]}</div>
+                    ) : (
+                      <LineSkeleton width="w-24" />
+                    )}
+                    {settings?.hours ? (
+                      <div className="text-sm text-gray-400">{settings.hours}</div>
+                    ) : (
+                      <div className="mt-1"><LineSkeleton width="w-20" /></div>
+                    )}
                   </div>
                 </div>
               </div>
