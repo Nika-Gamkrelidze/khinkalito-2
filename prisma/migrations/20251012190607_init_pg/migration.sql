@@ -39,6 +39,14 @@ CREATE TABLE "Setting" (
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("key")
 );
 
+-- Seed default whatsappManagerPhones setting if not present
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM "Setting" WHERE "key" = 'whatsappManagerPhones') THEN
+    INSERT INTO "Setting" ("key", "value") VALUES ('whatsappManagerPhones', '[]'::jsonb);
+  END IF;
+END $$;
+
 -- CreateTable
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,

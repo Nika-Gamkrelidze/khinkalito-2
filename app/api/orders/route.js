@@ -42,7 +42,8 @@ export async function POST(request) {
     if (!size) throw new Error("Size not found");
     const quantity = Math.max(1, Number(it.quantity || 1));
     const price = size.price * quantity;
-    const productName = typeof product.name === "object" ? (product.name.en || product.name.ka || "") : product.name;
+    // Prefer Georgian product name when available, fallback to English
+    const productName = typeof product.name === "object" ? (product.name.ka || product.name.en || "") : product.name;
     return {
       productId: product.id,
       productName,
