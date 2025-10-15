@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { isValidGeorgianMobile } from "@/lib/phone";
 import { requireAdmin } from "@/lib/auth";
+import { sendManagerOrderNotification } from "@/lib/whatsapp";
 
 export async function GET(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,7 +42,8 @@ export async function POST(request) {
     if (!size) throw new Error("Size not found");
     const quantity = Math.max(1, Number(it.quantity || 1));
     const price = size.price * quantity;
-    const productName = typeof product.name === "object" ? (product.name.en || product.name.ka || "") : product.name;
+    // Prefer Georgian product name when available, fallback to English
+    const productName = typeof product.name === "object" ? (product.name.ka || product.name.en || "") : product.name;
     return {
       productId: product.id,
       productName,
@@ -70,6 +72,19 @@ export async function POST(request) {
       total,
     },
   });
+  // In debug, await for clearer error reporting; otherwise fire-and-forget
+  if (process.env.WHATSAPP_DEBUG === "true") {
+    try {
+      const result = await sendManagerOrderNotification(newOrder);
+      if (!result?.ok && process.env.WHATSAPP_DEBUG === "true") {
+        console.warn("WhatsApp debug result", result);
+      }
+    } catch (e) {
+      console.error("WhatsApp debug send error", e);
+    }
+  } else {
+    sendManagerOrderNotification(newOrder).catch(() => {});
+  }
   return NextResponse.json(newOrder, { status: 201 });
 }
 

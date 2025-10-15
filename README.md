@@ -51,6 +51,31 @@ ADMIN_SECRET=change-me
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+
+# WhatsApp Cloud API (manager notifications)
+WHATSAPP_ENABLED=false
+WHATSAPP_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_MANAGER_PHONE=
+# Optional template (recommended for business-initiated messages)
+WHATSAPP_TEMPLATE_NAME=
+WHATSAPP_TEMPLATE_LANG=en_US
+WHATSAPP_TEMPLATE_WITH_BODY=false
+# Structured parameters (optional)
+# Comma-separated tokens for body params. Available tokens:
+# orderId,date,customerName,customerFirstName,customerLastName,customerPhone,addressText,
+# locationLat,locationLng,locationUrl,items,itemsCount,total,currency,summary
+WHATSAPP_TEMPLATE_BODY_PARAMS=
+# Header param token (one of the same tokens above)
+WHATSAPP_TEMPLATE_HEADER_PARAM=
+# Currency code used when token "currency" is referenced
+WHATSAPP_CURRENCY=GEL
+# Summary language for 1-variable templates (en|ka)
+WHATSAPP_SUMMARY_LANG=ka
+# Optional Graph API version (default v22.0)
+WHATSAPP_GRAPH_VERSION=v22.0
+# Debug: await send and log details on server
+WHATSAPP_DEBUG=false
 ```
 
 Prisma commands:

@@ -934,7 +934,7 @@ function OrdersAdmin() {
 }
 
 function SettingsAdmin() {
-  const [settings, setSettings] = useState({ phone: "", hours: "", deliveringUntil: "", address: "", city: "", workingDays: { en: "", ka: "" }, ratingValue: "", deliveryMinutes: "", happyCustomers: "", heroImage: null, freeDeliveryThreshold: 0, heroTitle: { en: "", ka: "" }, heroDesc: { en: "", ka: "" }, aboutTitle: { en: "", ka: "" }, about1: { en: "", ka: "" }, menuDesc: { en: "", ka: "" }, completeOrderDesc: { en: "", ka: "" } });
+  const [settings, setSettings] = useState({ phone: "", hours: "", deliveringUntil: "", address: "", city: "", workingDays: { en: "", ka: "" }, ratingValue: "", deliveryMinutes: "", happyCustomers: "", heroImage: null, freeDeliveryThreshold: 0, heroTitle: { en: "", ka: "" }, heroDesc: { en: "", ka: "" }, aboutTitle: { en: "", ka: "" }, about1: { en: "", ka: "" }, menuDesc: { en: "", ka: "" }, completeOrderDesc: { en: "", ka: "" }, whatsappManagerPhones: [] });
   const [saving, setSaving] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
   const t = useTranslations();
@@ -944,6 +944,10 @@ function SettingsAdmin() {
       const s = data || {};
       const merged = {
         ...s,
+        // Back-compat: migrate single phone to array if needed
+        whatsappManagerPhones: Array.isArray(s.whatsappManagerPhones)
+          ? s.whatsappManagerPhones
+          : (s.whatsappManagerPhone ? [s.whatsappManagerPhone] : []),
         freeDeliveryThreshold: Number.isFinite(Number(s.freeDeliveryThreshold)) ? Number(s.freeDeliveryThreshold) : 0,
         heroTitle: {
           en: (s.heroTitle && s.heroTitle.en) || enMessages.home.heroTitle,
@@ -1047,6 +1051,43 @@ function SettingsAdmin() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
               <input className="input-field" value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} placeholder="+995 555 123 456" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp Manager Phones</label>
+              <div className="space-y-2">
+                {(settings.whatsappManagerPhones || []).map((p, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input
+                      className="input-field flex-1"
+                      value={p}
+                      onChange={(e) => {
+                        const arr = [...(settings.whatsappManagerPhones || [])];
+                        arr[idx] = e.target.value;
+                        setSettings({ ...settings, whatsappManagerPhones: arr });
+                      }}
+                      placeholder="e.g. +995 555 123 456"
+                    />
+                    <button
+                      type="button"
+                      className="px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                      onClick={() => {
+                        const arr = (settings.whatsappManagerPhones || []).filter((_, i) => i !== idx);
+                        setSettings({ ...settings, whatsappManagerPhones: arr });
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setSettings({ ...settings, whatsappManagerPhones: [...(settings.whatsappManagerPhones || []), ""] })}
+                >
+                  Add Number
+                </button>
+                <div className="text-xs text-gray-500">Messages will be sent to all listed numbers</div>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Working Hours</label>
