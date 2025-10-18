@@ -139,7 +139,22 @@ export async function PUT(request) {
   delete nextData.descriptionEn;
   delete nextData.descriptionKa;
 
-  const updated = await prisma.product.update({ where: { id }, data: nextData, include: { sizes: true } });
+  // Normalize sizes update: if sizes is provided as array, replace existing
+  if (Array.isArray(nextData.sizes)) {
+    const newSizes = nextData.sizes;
+    delete nextData.sizes;
+    await prisma.productSize.deleteMany({ where: { productId: id } });
+    await prisma.product.update({ where: { id }, data: nextData });
+    await prisma.product.update({
+      where: { id },
+      data: {
+        sizes: {
+          create: newSizes.map((s) => ({ sizeKg: Number(s.sizeKg), price: Number(s.price) })),
+        },
+      },
+    });
+  }
+  const updated = await prisma.product.findUnique({ where: { id }, include: { sizes: true } });
   const shaped = {
     id: updated.id,
     name: updated.name,
