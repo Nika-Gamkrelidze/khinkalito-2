@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "prisma migrate deploy && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:generate": "prisma generate",
     "prisma:seed": "node --experimental-json-modules prisma/seed.js",
-    "vercel-build": "prisma migrate deploy && next build --turbopack"
+    "vercel-build": "prisma migrate deploy && next build --turbopack",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
