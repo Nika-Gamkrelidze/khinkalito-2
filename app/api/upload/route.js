@@ -5,6 +5,8 @@ import { mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 
+export const runtime = "nodejs";
+
 export async function POST(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
@@ -36,31 +38,34 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Store in DB
     const originalName = (file.name || "upload").replace(/[^a-zA-Z0-9.-]/g, "_");
-    const created = await prisma.image.create({
-      data: {
-        filename: originalName,
-        mimeType: file.type,
-        size: buffer.length,
-        data: buffer,
-      },
-      select: { id: true },
-    });
-
-    // For backward-compatibility also persist file to public dir so existing public URLs continue to work if needed
-    // but expose canonical DB URL
     try {
-      const uploadDir = path.join(process.cwd(), "public", "images", "products");
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
+      // Primary: store in DB
+      const created = await prisma.image.create({
+        data: {
+          filename: originalName,
+          mimeType: file.type,
+          size: buffer.length,
+          data: buffer,
+        },
+        select: { id: true },
+      });
+      return NextResponse.json({ success: true, url: `/api/images/${created.id}`, id: created.id });
+    } catch (err) {
+      // Fallback: write to public dir (e.g., when migration not deployed yet)
+      try {
+        const uploadDir = path.join(process.cwd(), "public", "images", "products");
+        if (!existsSync(uploadDir)) {
+          await mkdir(uploadDir, { recursive: true });
+        }
+        const fallbackName = `${Date.now()}_${originalName}`;
+        await writeFile(path.join(uploadDir, fallbackName), buffer);
+        return NextResponse.json({ success: true, url: `/images/products/${fallbackName}`, filename: fallbackName });
+      } catch (fsErr) {
+        console.error("Upload fallback error:", fsErr);
+        return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
       }
-      const fallbackName = `${Date.now()}_${originalName}`;
-      await writeFile(path.join(uploadDir, fallbackName), buffer);
-    } catch {}
-
-    const publicUrl = `/api/images/${created.id}`;
-    return NextResponse.json({ success: true, url: publicUrl, id: created.id });
+    }
 
   } catch (error) {
     console.error("Upload error:", error);

@@ -17,4 +17,6 @@ export async function GET(_req, context) {
   });
 }
 
+export const runtime = "nodejs";
+
 
