@@ -417,12 +417,16 @@ function ProductsAdmin() {
     if (!product || !product.image) return;
     
     if (confirm("Are you sure you want to remove this image?")) {
-      const filename = product.image.split('/').pop();
+      const isApiImage = product.image.startsWith('/api/images/');
+      const imageId = isApiImage ? product.image.split('/').pop() : null;
       
       try {
-        await fetch(`/api/upload?filename=${filename}`, {
-          method: "DELETE",
-        });
+        if (imageId) {
+          await fetch(`/api/upload?id=${imageId}`, { method: "DELETE" });
+        } else {
+          const filename = product.image.split('/').pop();
+          await fetch(`/api/upload?filename=${filename}`, { method: "DELETE" });
+        }
         await updateProduct({ ...product, image: null });
       } catch (error) {
         console.error("Failed to remove image:", error);
@@ -1030,10 +1034,15 @@ function SettingsAdmin() {
   async function removeHeroImage() {
     if (!settings?.heroImage) return;
     if (!confirm("Remove hero image?")) return;
-    const filename = settings.heroImage.split('/').pop();
     try {
       setUploadingHero(true);
-      await fetch(`/api/upload?filename=${filename}`, { method: "DELETE" });
+      if (settings.heroImage.startsWith('/api/images/')) {
+        const imageId = settings.heroImage.split('/').pop();
+        await fetch(`/api/upload?id=${imageId}`, { method: "DELETE" });
+      } else {
+        const filename = settings.heroImage.split('/').pop();
+        await fetch(`/api/upload?filename=${filename}`, { method: "DELETE" });
+      }
     } catch (e) {
       // ignore delete failure; still clear reference
     } finally {

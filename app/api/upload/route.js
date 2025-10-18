@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
+import prisma from "@/lib/prisma";
+import { mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 
@@ -35,29 +36,31 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create unique filename
-    const timestamp = Date.now();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `${timestamp}_${originalName}`;
-    
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), "public", "images", "products");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
-
-    // Write file
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
-
-    // Return the public URL
-    const publicUrl = `/images/products/${filename}`;
-    
-    return NextResponse.json({ 
-      success: true, 
-      url: publicUrl,
-      filename: filename
+    // Store in DB
+    const originalName = (file.name || "upload").replace(/[^a-zA-Z0-9.-]/g, "_");
+    const created = await prisma.image.create({
+      data: {
+        filename: originalName,
+        mimeType: file.type,
+        size: buffer.length,
+        data: buffer,
+      },
+      select: { id: true },
     });
+
+    // For backward-compatibility also persist file to public dir so existing public URLs continue to work if needed
+    // but expose canonical DB URL
+    try {
+      const uploadDir = path.join(process.cwd(), "public", "images", "products");
+      if (!existsSync(uploadDir)) {
+        await mkdir(uploadDir, { recursive: true });
+      }
+      const fallbackName = `${Date.now()}_${originalName}`;
+      await writeFile(path.join(uploadDir, fallbackName), buffer);
+    } catch {}
+
+    const publicUrl = `/api/images/${created.id}`;
+    return NextResponse.json({ success: true, url: publicUrl, id: created.id });
 
   } catch (error) {
     console.error("Upload error:", error);
@@ -72,28 +75,33 @@ export async function DELETE(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
     const filename = searchParams.get("filename");
-    
-    if (!filename) {
-      return NextResponse.json({ error: "No filename provided" }, { status: 400 });
+
+    if (!id && !filename) {
+      return NextResponse.json({ error: "Provide id or filename" }, { status: 400 });
     }
 
-    // Security check - ensure filename doesn't contain path traversal
+    // Prefer DB deletion by id
+    if (id) {
+      try {
+        await prisma.image.delete({ where: { id } });
+      } catch {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Backward-compat: delete a file on disk by filename
     if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
-
     const filePath = path.join(process.cwd(), "public", "images", "products", filename);
-    
-    // Check if file exists
     if (!existsSync(filePath)) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
-
-    // Delete file
     const { unlink } = await import("fs/promises");
     await unlink(filePath);
-
     return NextResponse.json({ success: true });
 
   } catch (error) {

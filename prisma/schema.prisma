@@ -52,4 +52,15 @@ model Order {
   address   Json
   items     Json
   total     Int
+  payment   Json?
+}
+
+/// Stores uploaded images as binary with metadata
+model Image {
+  id         String   @id @default(uuid())
+  filename   String
+  mimeType   String
+  size       Int
+  data       Bytes
+  createdAt  DateTime @default(now())
 }

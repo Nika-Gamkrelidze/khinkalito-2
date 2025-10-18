@@ -107,12 +107,43 @@ Deployment on Vercel:
   - `Product { id, name Json, description Json, image, active, createdAt, sizes[] }`
   - `ProductSize { productId -> Product, sizeKg Float, price Int }`
   - `Setting { key, value Json }`
-  - `Order { id, createdAt, status, customer Json, address Json, items Json, total Int }`
+  - `Order { id, createdAt, status, customer Json, address Json, items Json, total Int, payment Json? }`
 - API routes (server actions/route handlers):
   - `/api/products` CRUD via Prisma (`Product` + `ProductSize`)
   - `/api/orders` create/list/update via Prisma (`Order`)
   - `/api/settings` key/value via Prisma (`Setting`)
   - `/api/users` admin-only CRUD via Prisma (`User`)
+  - iPay integration:
+    - POST `/api/payments/ipay/create` → body `{ orderId }` returns `{ redirectUrl }`
+    - POST `/api/payments/ipay/webhook` → bank callback (configure at BOG)
+    - Return page: `app/[locale]/checkout/ipay/return/page.jsx`
+
+### iPay (Bank of Georgia) setup
+
+Add to `.env`:
+
+```
+# iPay API
+IPAY_CLIENT_ID=
+IPAY_CLIENT_SECRET=
+IPAY_API_BASE=https://ipay.ge/opay/api/v1
+IPAY_TOKEN_URL=https://ipay.ge/opay/oauth2/token
+
+# Redirects
+IPAY_RETURN_URL=https://your-domain.com/checkout/ipay/return
+IPAY_CALLBACK_URL=https://your-domain.com/api/payments/ipay/webhook
+```
+
+Flow:
+- Create an `Order` (status `pending`).
+- Call POST `/api/payments/ipay/create` with `{ orderId }`.
+- Redirect user to the returned `redirectUrl`.
+- iPay calls `/api/payments/ipay/webhook`; we update order status to `paid`/`failed`.
+- Show the return page while status settles; optionally poll your own order status.
+
+Important:
+- Implement real webhook signature/JWT verification based on BOG docs in `app/api/payments/ipay/webhook/route.js`.
+- Use sandbox/test credentials first; switch to production after approval.
   - `/api/auth/*` cookie-based admin session using `lib/auth.js`
 
 ## Local Development Tips
