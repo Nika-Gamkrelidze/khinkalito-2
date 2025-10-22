@@ -950,16 +950,13 @@ export default function Home() {
               </button>
             </div>
             <div className="flex-1">
-              <div className="w-full h-full flex items-center justify-center p-4">
-                <a
-                  href={paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary w-full md:w-auto justify-center text-base md:text-lg py-3 md:py-4 hover:scale-105 transition-all duration-200"
-                >
-                  Open secure payment in a new tab
-                </a>
-              </div>
+              <iframe
+                src={paymentUrl}
+                title="Bank of Georgia"
+                className="w-full h-full"
+                allow="payment *; clipboard-write; fullscreen"
+                allowFullScreen
+              />
             </div>
           </div>
         </div>
