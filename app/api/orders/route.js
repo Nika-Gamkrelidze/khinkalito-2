@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { isValidGeorgianMobile } from "@/lib/phone";
 import { requireAdmin } from "@/lib/auth";
-import { sendManagerOrderNotification } from "@/lib/whatsapp";
+import { createIpayOrder } from "@/lib/ipay";
+import { randomUUID } from "crypto";
 
 export async function GET(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,12 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body. Set 'Content-Type: application/json' and send valid JSON." }, { status: 400 });
+  }
   const { firstName, lastName, phone, addressText, location, items } = body;
 
   if (!firstName || !lastName) {
@@ -72,20 +78,69 @@ export async function POST(request) {
       total,
     },
   });
-  // In debug, await for clearer error reporting; otherwise fire-and-forget
-  if (process.env.WHATSAPP_DEBUG === "true") {
-    try {
-      const result = await sendManagerOrderNotification(newOrder);
-      if (!result?.ok && process.env.WHATSAPP_DEBUG === "true") {
-        console.warn("WhatsApp debug result", result);
-      }
-    } catch (e) {
-      console.error("WhatsApp debug send error", e);
+
+  // Initiate payment with Bank of Georgia immediately after order creation
+  try {
+    const currency = process.env.WHATSAPP_CURRENCY || "GEL";
+    const payload = {
+      callback_url: process.env.IPAY_CALLBACK_URL,
+      external_order_id: newOrder.id,
+      purchase_units: {
+        currency: currency,
+        // Our prices are already in GEL integer/decimal units; do not divide
+        total_amount: Number(newOrder.total),
+        basket: detailedItems.map((it) => ({
+          product_id: String(it.productId),
+          description: String(it.productName || `Order ${newOrder.id}`),
+          quantity: Number(it.quantity || 1),
+          unit_price: Number(it.unitPrice),
+        })),
+      },
+      redirect_urls: {
+        success: process.env.IPAY_RETURN_URL,
+        fail: process.env.IPAY_RETURN_URL,
+      },
+      buyer: {
+        full_name: `${firstName} ${lastName}`.trim(),
+        phone_number: phone,
+      },
+      merchant: {
+        id: process.env.IPAY_MERCHANT_ID || undefined,
+        terminal_id: process.env.IPAY_TERMINAL_ID || undefined,
+        name: process.env.IPAY_MERCHANT_NAME || undefined,
+        inn: process.env.IPAY_CLIENT_INN || undefined,
+      },
+    };
+
+    const gateway = await createIpayOrder(payload, {
+      idempotencyKey: randomUUID(),
+      acceptLanguage: "en",
+    });
+
+    const redirectUrl = gateway?.redirect_url || gateway?._links?.redirect?.href || gateway?.paymentUrl || gateway?.redirectUrl || gateway?.url;
+
+    // Persist payment request/response metadata
+    await prisma.order.update({
+      where: { id: newOrder.id },
+      data: {
+        payment: {
+          gateway: "bog",
+          createdAt: new Date().toISOString(),
+          request: payload,
+          response: gateway,
+          whatsappSent: false,
+        },
+      },
+    });
+
+    if (!redirectUrl) {
+      return NextResponse.json({ order: newOrder, error: "Payment URL not provided by gateway" }, { status: 502 });
     }
-  } else {
-    sendManagerOrderNotification(newOrder).catch(() => {});
+
+    return NextResponse.json({ order: newOrder, redirectUrl }, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ order: newOrder, error: "Payment initiation failed", details: String(e?.message || e) }, { status: 500 });
   }
-  return NextResponse.json(newOrder, { status: 201 });
 }
 
 export async function PUT(request) {

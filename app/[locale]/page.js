@@ -177,6 +177,8 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
   const geocodeTimeoutRef = useRef(null);
   const geocodeSeqRef = useRef(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
@@ -194,6 +196,38 @@ export default function Home() {
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
+
+  // Payment iframe return listener + status polling fallback
+  useEffect(() => {
+    function onMessage(ev) {
+      const data = ev?.data;
+      if (data && data.type === "ipay:returned") {
+        setPaymentUrl(null);
+        setMessage({ type: "success", text: t("success.orderPlaced") });
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [t]);
+
+  useEffect(() => {
+    if (!paymentUrl || !currentOrderId) return;
+    let timer;
+    async function poll() {
+      try {
+        const r = await fetch(`/api/orders/status?id=${encodeURIComponent(currentOrderId)}`, { cache: "no-store" });
+        const j = await r.json();
+        if (j?.status === "paid") {
+          setPaymentUrl(null);
+          setMessage({ type: "success", text: t("success.orderPlaced") });
+          return;
+        }
+      } catch {}
+      timer = setTimeout(poll, 2500);
+    }
+    timer = setTimeout(poll, 2500);
+    return () => clearTimeout(timer);
+  }, [paymentUrl, currentOrderId, t]);
 
   // Debounced geocoding of typed address -> update map pin
   useEffect(() => {
@@ -295,6 +329,10 @@ export default function Home() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create order");
+      if (data?.redirectUrl) {
+        setPaymentUrl(data.redirectUrl);
+      }
+      setCurrentOrderId(data?.order?.id || null);
       const smsText = `${firstName} ${lastName} | ${phone} | ${addressText || "map"} | ` +
         detailedCart.map((i) => `${i.name} ${i.sizeKg}kg x${i.quantity}`).join(", ") +
         ` | Total: ${total.toFixed(2)} GEL`;
@@ -893,6 +931,36 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal - Embedded iframe */}
+      {paymentUrl && (
+        <div className="fixed inset-0 z-[60]">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setPaymentUrl(null)} />
+          <div className="absolute inset-x-0 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:w-[920px] h-[85vh] md:h-[700px] bg-white rounded-t-2xl md:rounded-2xl shadow-2xl flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900">Complete your payment</h3>
+                <p className="text-sm text-gray-600">Secure payment is embedded below. Close to cancel.</p>
+              </div>
+              <button onClick={() => setPaymentUrl(null)} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                <span className="text-gray-600 text-lg">×</span>
+              </button>
+            </div>
+            <div className="flex-1">
+              <div className="w-full h-full flex items-center justify-center p-4">
+                <a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary w-full md:w-auto justify-center text-base md:text-lg py-3 md:py-4 hover:scale-105 transition-all duration-200"
+                >
+                  Open secure payment in a new tab
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}

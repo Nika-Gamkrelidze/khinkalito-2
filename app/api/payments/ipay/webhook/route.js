@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { sendManagerOrderNotification } from "@/lib/whatsapp";
 
 // NOTE: Adjust verification according to iPay docs (JWT/HMAC). This is a placeholder.
 async function verifyIpaySignature(request, rawBody) {
@@ -11,6 +12,7 @@ async function verifyIpaySignature(request, rawBody) {
 }
 
 export async function POST(request) {
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
   const raw = await request.text();
 
   const ok = await verifyIpaySignature(request, raw);
@@ -18,9 +20,22 @@ export async function POST(request) {
 
   let payload;
   try {
-    payload = JSON.parse(raw);
+    if (contentType.includes("application/json")) {
+      payload = JSON.parse(raw);
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      const params = new URLSearchParams(raw);
+      payload = Object.fromEntries(params.entries());
+    } else {
+      // Attempt JSON first, fallback to urlencoded
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        const params = new URLSearchParams(raw);
+        payload = Object.fromEntries(params.entries());
+      }
+    }
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   // Expected fields depend on iPay; commonly: merchant orderId, ipay order id, status, amount
@@ -55,6 +70,19 @@ export async function POST(request) {
         },
       },
     });
+
+    // Send WhatsApp only once when payment is marked paid
+    if (normalizedStatus === "paid") {
+      try {
+        await sendManagerOrderNotification(updated);
+        await prisma.order.update({
+          where: { id: updated.id },
+          data: { payment: { ...(updated.payment || {}), whatsappSent: true } },
+        });
+      } catch {
+        // ignore
+      }
+    }
 
     return NextResponse.json({ ok: true, orderId: updated.id });
   } catch (e) {
