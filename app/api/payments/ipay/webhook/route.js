@@ -40,8 +40,19 @@ export async function POST(request) {
   }
 
   // Expected fields depend on iPay; commonly: merchant orderId, ipay order id, status, amount
-  const merchantOrderId = payload?.orderId || payload?.merchantOrderId || payload?.merchantOrderReference;
-  const status = payload?.status || payload?.paymentStatus;
+  // Try multiple known field names from BOG variants
+  const merchantOrderId =
+    payload?.orderId ||
+    payload?.merchantOrderId ||
+    payload?.merchantOrderReference ||
+    payload?.external_order_id ||
+    payload?.order_id;
+
+  const status =
+    payload?.status ||
+    payload?.paymentStatus ||
+    payload?.order_status ||
+    payload?.payment_status;
 
   if (!merchantOrderId || !status) {
     return NextResponse.json({ error: "Missing order identifiers" }, { status: 400 });
@@ -50,8 +61,8 @@ export async function POST(request) {
   // Map gateway status to local status
   const normalizedStatus = (function mapStatus(s) {
     const v = String(s).toLowerCase();
-    if (v.includes("success") || v === "paid" || v === "approved") return "paid";
-    if (v.includes("fail") || v === "declined" || v === "canceled") return "failed";
+    if (v.includes("success") || v.includes("complete") || v === "paid" || v === "approved" || v === "captured") return "paid";
+    if (v.includes("reject") || v.includes("fail") || v === "declined" || v === "canceled" || v === "cancelled") return "failed";
     return "pending";
   })(status);
 
