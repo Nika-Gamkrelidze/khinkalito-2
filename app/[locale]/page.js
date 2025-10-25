@@ -179,8 +179,6 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [currentOrderId, setCurrentOrderId] = useState(null);
-  const [orderImages, setOrderImages] = useState([]); // array of {id,url,localPreview}
-  const [uploadingOrderImages, setUploadingOrderImages] = useState(false);
   const geocodeTimeoutRef = useRef(null);
   const geocodeSeqRef = useRef(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
@@ -327,7 +325,7 @@ export default function Home() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, phone, addressText, location, items: cart, imageIds: orderImages.map((i) => i.id).filter(Boolean) })
+        body: JSON.stringify({ firstName, lastName, phone, addressText, location, items: cart })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create order");
@@ -341,44 +339,10 @@ export default function Home() {
       console.log("SMS Payload:", smsText);
       setMessage({ type: "success", text: t("success.orderPlaced") });
       setCart([]);
-      setOrderImages([]);
     } catch (e) {
       setMessage({ type: "error", text: e.message });
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function uploadOrderFiles(files) {
-    const fileArr = Array.from(files || []);
-    if (fileArr.length === 0) return;
-    setUploadingOrderImages(true);
-    try {
-      for (const f of fileArr) {
-        const localUrl = URL.createObjectURL(f);
-        // optimistic preview
-        const optimistic = { id: null, url: null, localPreview: localUrl };
-        setOrderImages((prev) => [...prev, optimistic]);
-        const form = new FormData();
-        form.append("file", f);
-        const r = await fetch("/api/upload/order", { method: "POST", body: form });
-        if (!r.ok) {
-          continue;
-        }
-        const j = await r.json();
-        const newId = j.id || null;
-        const newUrl = j.url || null;
-        setOrderImages((prev) => {
-          // replace first placeholder without id
-          const idx = prev.findIndex((x) => x.id == null && x.localPreview === localUrl);
-          const next = [...prev];
-          if (idx !== -1) next[idx] = { id: newId, url: newUrl, localPreview: localUrl };
-          else next.push({ id: newId, url: newUrl, localPreview: localUrl });
-          return next;
-        });
-      }
-    } finally {
-      setUploadingOrderImages(false);
     }
   }
 
@@ -697,48 +661,6 @@ export default function Home() {
                   ) : (
                     <span>{t("home.freeDelivery")}</span>
                   )}
-                </div>
-
-                {/* Order Images */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <span className="text-amber-700 font-bold text-sm">3</span>
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900">{t("home.vehiclePhotos") || "Vehicle Photos (optional)"}</h3>
-                </div>
-                <div className="mb-6">
-                  <div className="flex gap-3 flex-wrap">
-                    {orderImages.map((img, idx) => (
-                      <div key={idx} className="w-20 h-20 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative">
-                        {(img.url || img.localPreview) ? (
-                          <img src={img.url || img.localPreview} alt="upload" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setOrderImages((prev) => prev.filter((_, i) => i !== idx))}
-                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center"
-                          aria-label="Remove image"
-                        >×</button>
-                      </div>
-                    ))}
-                    <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 text-gray-500 flex items-center justify-center cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => uploadOrderFiles(e.target.files)}
-                        className="hidden"
-                      />
-                      {uploadingOrderImages ? (
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300 border-t-red-500 animate-spin" />
-                      ) : (
-                        <span className="text-xl">＋</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2">JPEG/PNG/WebP up to 5MB each. We compress to WebP.</div>
                 </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <ClockIcon className="w-4 h-4 text-gray-500" />

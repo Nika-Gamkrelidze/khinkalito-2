@@ -731,7 +731,6 @@ function ProductsAdmin() {
 function OrdersAdmin() {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("today");
-  const [viewer, setViewer] = useState({ open: false, url: null });
   const t = useTranslations();
 
   useEffect(() => {
@@ -868,24 +867,6 @@ function OrdersAdmin() {
                 </div>
               </div>
 
-              {/* Order Images */}
-              {Array.isArray(order.imageUrls) && order.imageUrls.length > 0 && (
-                <div className="mb-4">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Photos</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {order.imageUrls.map((u, idx) => (
-                      <button
-                        key={idx}
-                        className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:ring-2 hover:ring-red-200"
-                        onClick={() => setViewer({ open: true, url: u })}
-                      >
-                        <img src={u} alt="order" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Status Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100 md:flex-row flex-col gap-3 md:gap-0">
                 <div className="text-sm text-gray-500 w-full md:w-auto">
@@ -952,19 +933,6 @@ function OrdersAdmin() {
           </div>
         )}
       </div>
-      {viewer.open && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setViewer({ open: false, url: null })} />
-          <div className="absolute inset-0 md:inset-x-10 md:inset-y-10 bg-white rounded-none md:rounded-2xl shadow-2xl flex items-center justify-center p-3">
-            <img src={viewer.url} alt="preview" className="max-h-full max-w-full object-contain" />
-            <button
-              className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-              onClick={() => setViewer({ open: false, url: null })}
-              aria-label="Close"
-            >×</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

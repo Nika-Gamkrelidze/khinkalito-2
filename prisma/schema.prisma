@@ -53,7 +53,6 @@ model Order {
   items     Json
   total     Int
   payment   Json?
-  images    OrderImage[]
 }
 
 /// Stores uploaded images as binary with metadata
@@ -64,16 +63,4 @@ model Image {
   size       Int
   data       Bytes
   createdAt  DateTime @default(now())
-  orders     OrderImage[]
-}
-
-model OrderImage {
-  orderId   String
-  imageId   String
-  createdAt DateTime @default(now())
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  image Image @relation(fields: [imageId], references: [id], onDelete: Cascade)
-
-  @@id([orderId, imageId])
 }

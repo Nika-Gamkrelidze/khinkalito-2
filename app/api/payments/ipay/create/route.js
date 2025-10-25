@@ -41,22 +41,14 @@ export async function POST(request) {
           "",
         phone_number: (order.customer && typeof order.customer === "object" && order.customer.phone) || "",
       },
+      // Optional merchant fields (include if required by your tenant)
+      merchant: {
+        id: process.env.IPAY_MERCHANT_ID || undefined,
+        terminal_id: process.env.IPAY_TERMINAL_ID || undefined,
+        name: process.env.IPAY_MERCHANT_NAME || undefined,
+        inn: process.env.IPAY_CLIENT_INN || undefined,
+      },
     };
-
-    // Only include merchant object if all required fields are present
-    const merchantId = process.env.IPAY_MERCHANT_ID;
-    const terminalId = process.env.IPAY_TERMINAL_ID;
-    const merchantName = process.env.IPAY_MERCHANT_NAME;
-    const clientInn = process.env.IPAY_CLIENT_INN;
-    
-    if (merchantId && terminalId) {
-      payload.merchant = {
-        id: merchantId,
-        terminal_id: terminalId,
-      };
-      if (merchantName) payload.merchant.name = merchantName;
-      if (clientInn) payload.merchant.inn = clientInn;
-    }
 
     const gateway = await createIpayOrder(payload, {
       idempotencyKey: randomUUID(),
