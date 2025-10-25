@@ -10,8 +10,12 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const where = status ? { status } : {};
-  const orders = await prisma.order.findMany({ where, orderBy: { createdAt: "desc" } });
-  return NextResponse.json(orders);
+  const orders = await prisma.order.findMany({ where, orderBy: { createdAt: "desc" }, include: { images: { include: { image: { select: { id: true } } } } } });
+  const shaped = orders.map((o) => ({
+    ...o,
+    imageUrls: (o.images || []).map((oi) => `/api/images/${oi.image.id}`),
+  }));
+  return NextResponse.json(shaped);
 }
 
 export async function POST(request) {
@@ -21,7 +25,7 @@ export async function POST(request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body. Set 'Content-Type: application/json' and send valid JSON." }, { status: 400 });
   }
-  const { firstName, lastName, phone, addressText, location, items } = body;
+  const { firstName, lastName, phone, addressText, location, items, imageIds } = body;
 
   if (!firstName || !lastName) {
     return NextResponse.json({ error: "Missing name" }, { status: 400 });
@@ -76,12 +80,23 @@ export async function POST(request) {
       },
       items: detailedItems,
       total,
+      images: Array.isArray(imageIds) && imageIds.length > 0 ? {
+        create: imageIds.filter(Boolean).map((id) => ({ image: { connect: { id: String(id) } } }))
+      } : undefined,
     },
+    include: { images: { include: { image: { select: { id: true } } } } },
   });
 
   // Initiate payment with Bank of Georgia immediately after order creation
   try {
+    // Validate required environment variables
+    if (!process.env.IPAY_CALLBACK_URL || !process.env.IPAY_RETURN_URL) {
+      throw new Error("Missing required iPay environment variables: IPAY_CALLBACK_URL or IPAY_RETURN_URL");
+    }
+
     const currency = process.env.WHATSAPP_CURRENCY || "GEL";
+    
+    // Build payload, removing undefined values
     const payload = {
       callback_url: process.env.IPAY_CALLBACK_URL,
       external_order_id: newOrder.id,
@@ -104,13 +119,22 @@ export async function POST(request) {
         full_name: `${firstName} ${lastName}`.trim(),
         phone_number: phone,
       },
-      merchant: {
-        id: process.env.IPAY_MERCHANT_ID || undefined,
-        terminal_id: process.env.IPAY_TERMINAL_ID || undefined,
-        name: process.env.IPAY_MERCHANT_NAME || undefined,
-        inn: process.env.IPAY_CLIENT_INN || undefined,
-      },
     };
+
+    // Only include merchant object if all required fields are present
+    const merchantId = process.env.IPAY_MERCHANT_ID;
+    const terminalId = process.env.IPAY_TERMINAL_ID;
+    const merchantName = process.env.IPAY_MERCHANT_NAME;
+    const clientInn = process.env.IPAY_CLIENT_INN;
+    
+    if (merchantId && terminalId) {
+      payload.merchant = {
+        id: merchantId,
+        terminal_id: terminalId,
+      };
+      if (merchantName) payload.merchant.name = merchantName;
+      if (clientInn) payload.merchant.inn = clientInn;
+    }
 
     const gateway = await createIpayOrder(payload, {
       idempotencyKey: randomUUID(),
@@ -133,13 +157,15 @@ export async function POST(request) {
       },
     });
 
+    const shapedOrder = { ...newOrder, imageUrls: (newOrder.images || []).map((oi) => `/api/images/${oi.image.id}`) };
     if (!redirectUrl) {
-      return NextResponse.json({ order: newOrder, error: "Payment URL not provided by gateway" }, { status: 502 });
+      return NextResponse.json({ order: shapedOrder, error: "Payment URL not provided by gateway" }, { status: 502 });
     }
 
-    return NextResponse.json({ order: newOrder, redirectUrl }, { status: 201 });
+    return NextResponse.json({ order: shapedOrder, redirectUrl }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ order: newOrder, error: "Payment initiation failed", details: String(e?.message || e) }, { status: 500 });
+    const shapedOrder = { ...newOrder, imageUrls: (newOrder.images || []).map((oi) => `/api/images/${oi.image.id}`) };
+    return NextResponse.json({ order: shapedOrder, error: "Payment initiation failed", details: String(e?.message || e) }, { status: 500 });
   }
 }
 

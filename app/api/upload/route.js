@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -36,7 +37,24 @@ export async function POST(request) {
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const originalBuffer = Buffer.from(bytes);
+    // Convert and compress while preserving visual quality
+    let buffer = originalBuffer;
+    let outMime = file.type;
+    try {
+      const image = sharp(originalBuffer, { failOn: "none" });
+      const metadata = await image.metadata();
+      const width = metadata.width || 0;
+      const targetWidth = Math.min(1920, Math.max(0, width));
+      // Prefer WebP output; good balance size/quality
+      const converted = image.resize(targetWidth, null, { withoutEnlargement: true }).webp({ quality: 82, effort: 5 });
+      buffer = await converted.toBuffer();
+      outMime = "image/webp";
+    } catch (convErr) {
+      // Fallback to original buffer if conversion fails
+      buffer = originalBuffer;
+      outMime = file.type;
+    }
 
     const originalName = (file.name || "upload").replace(/[^a-zA-Z0-9.-]/g, "_");
     try {
@@ -44,7 +62,7 @@ export async function POST(request) {
       const created = await prisma.image.create({
         data: {
           filename: originalName,
-          mimeType: file.type,
+          mimeType: outMime,
           size: buffer.length,
           data: buffer,
         },
