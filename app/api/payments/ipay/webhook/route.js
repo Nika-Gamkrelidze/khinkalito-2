@@ -8,6 +8,7 @@ async function verifyIpaySignature(request, rawBody) {
   // or validate X-Signature header using a shared secret if applicable.
   // For now, allow in non-production to enable local testing.
   if (process.env.NODE_ENV !== "production") return true;
+  if (process.env.IPAY_WEBHOOK_INSECURE === "true") return true; // temp bypass in prod if explicitly enabled
   return false;
 }
 
