@@ -965,25 +965,50 @@ function OrdersAdmin() {
 }
 
 function PaymentsAdmin() {
-  const [payments, setPayments] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [refundModal, setRefundModal] = useState(null); // { order, isPartial, amount }
+  const [refundPassword, setRefundPassword] = useState("");
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refunding, setRefunding] = useState(false);
+  const [refundError, setRefundError] = useState(null);
   const t = useTranslations();
 
   useEffect(() => {
-    fetchPayments();
+    fetchOrders();
   }, [filter]);
 
-  async function fetchPayments() {
+  async function fetchOrders() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter !== "all") params.append("status", filter);
-      const res = await fetch(`/api/payments?${params.toString()}`);
+      if (filter === "paid") params.append("status", "paid");
+      else if (filter === "pending") params.append("status", "pending");
+      else if (filter === "failed") params.append("status", "failed");
+      else if (filter === "refunded") {
+        // Get both full and partial refunds
+        params.append("status", "refunded,refunded_partially");
+      }
+      const res = await fetch(`/api/orders?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setPayments(data.payments || []);
+        // Only show orders with payments
+        const ordersWithPayments = (data || []).filter((o) => o.payments && o.payments.length > 0);
+        
+        // If filtering for refunded, also check order status
+        if (filter === "refunded") {
+          setOrders(ordersWithPayments.filter((o) => 
+            o.status === "refunded" || 
+            o.status === "refunded_partially" ||
+            o.status === "refund_pending" ||
+            o.status === "refund_pending_partial"
+          ));
+        } else {
+          setOrders(ordersWithPayments);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch payments:", error);
@@ -992,73 +1017,203 @@ function PaymentsAdmin() {
     }
   }
 
-  function formatAmount(amount, currency = "GEL") {
-    return `${(amount / 100).toFixed(2)} ${currency}`;
+  async function syncWithBank() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/payments/ipay/sync", { method: "POST" });
+      if (res.ok) {
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error("Sync failed:", error);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  function openRefundModal(order, isPartial = false) {
+    setRefundModal({ order, isPartial });
+    setRefundPassword("");
+    setRefundAmount(isPartial ? "" : order.total.toString());
+    setRefundError(null);
+  }
+
+  function closeRefundModal() {
+    setRefundModal(null);
+    setRefundPassword("");
+    setRefundAmount("");
+    setRefundError(null);
+  }
+
+  async function handleRefund() {
+    if (!refundModal) return;
+    
+    setRefunding(true);
+    setRefundError(null);
+
+    try {
+      const payload = {
+        orderId: refundModal.order.id,
+        adminPassword: refundPassword,
+      };
+
+      // Add amount for partial refund
+      if (refundModal.isPartial && refundAmount) {
+        payload.amount = parseFloat(refundAmount);
+      }
+
+      const res = await fetch("/api/payments/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setRefundError(data.error + (data.details ? `: ${data.details}` : ""));
+        return;
+      }
+
+      // Success! Show appropriate message
+      if (data.manualMode) {
+        // Show detailed manual refund instructions
+        alert(data.message);
+      } else {
+        alert(data.message || "Refund processed successfully!");
+      }
+      
+      closeRefundModal();
+      fetchOrders();
+    } catch (error) {
+      setRefundError("Failed to process refund: " + error.message);
+    } finally {
+      setRefunding(false);
+    }
+  }
+
+  function canRefund(order) {
+    // Check if order is paid/completed or pending refund
+    const refundableStatuses = ["paid", "completed", "refund_pending", "refund_pending_partial"];
+    if (!refundableStatuses.includes(order.status)) {
+      return { allowed: false, reason: "Only paid orders can be refunded" };
+    }
+
+    // Check if already fully refunded
+    const latestPayment = order.payments?.[order.payments.length - 1];
+    if (latestPayment?.status === "refunded") {
+      return { allowed: false, reason: "Already refunded" };
+    }
+
+    // Check 1-week limit
+    const paymentDate = new Date(order.createdAt);
+    const now = new Date();
+    const daysDiff = (now - paymentDate) / (1000 * 60 * 60 * 24);
+    
+    if (daysDiff > 7) {
+      return { allowed: false, reason: `Payment is ${Math.floor(daysDiff)} days old (max 7 days)` };
+    }
+
+    return { allowed: true };
   }
 
   function getStatusBadgeClass(status) {
     switch (status) {
+      case "paid":
       case "completed":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 border-green-200";
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "failed":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 border-red-200";
       case "refunded":
-        return "bg-gray-100 text-gray-800";
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "refunded_partially":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "refund_pending":
+      case "refund_pending_partial":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return "bg-gray-100 text-gray-600";
+        return "bg-gray-100 text-gray-600 border-gray-200";
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Header & Filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {t("admin.payments.title", { default: "Payments" })}
-        </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "all"
-                ? "bg-red-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {t("admin.payments.filter.all", { default: "All" })}
-          </button>
-          <button
-            onClick={() => setFilter("completed")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "completed"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {t("admin.payments.filter.completed", { default: "Completed" })}
-          </button>
-          <button
-            onClick={() => setFilter("pending")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "pending"
-                ? "bg-yellow-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {t("admin.payments.filter.pending", { default: "Pending" })}
-          </button>
-          <button
-            onClick={() => setFilter("failed")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === "failed"
-                ? "bg-red-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {t("admin.payments.filter.failed", { default: "Failed" })}
-          </button>
+      {/* Header & Controls */}
+      <div className="card">
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {t("admin.payments.title", { default: "Payments" })}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {orders.length} {t("admin.payments.countLabel", { default: "payments" })}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={syncWithBank}
+                disabled={syncing}
+                className="btn-primary disabled:opacity-50"
+              >
+                {syncing ? "Syncing..." : "🔄 Sync with Bank"}
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === "all"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {t("admin.payments.filter.all", { default: "All" })}
+            </button>
+            <button
+              onClick={() => setFilter("paid")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === "paid"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {t("admin.payments.filter.paid", { default: "Paid" })}
+            </button>
+            <button
+              onClick={() => setFilter("pending")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === "pending"
+                  ? "bg-yellow-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {t("admin.payments.filter.pending", { default: "Pending" })}
+            </button>
+            <button
+              onClick={() => setFilter("refunded")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === "refunded"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {t("admin.payments.filter.refunded", { default: "Refunded" })}
+            </button>
+            <button
+              onClick={() => setFilter("failed")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === "failed"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {t("admin.payments.filter.failed", { default: "Failed" })}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1067,7 +1222,7 @@ function PaymentsAdmin() {
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-red-600"></div>
         </div>
-      ) : payments.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-xl">
           <CreditCardIcon className="mx-auto mb-4 text-gray-400" style={{ width: 48, height: 48 }} />
           <p className="text-gray-600">
@@ -1075,100 +1230,110 @@ function PaymentsAdmin() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.date", { default: "Date" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.order", { default: "Order ID" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.customer", { default: "Customer" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.amount", { default: "Amount" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.gateway", { default: "Gateway" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.method", { default: "Method" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.status", { default: "Status" })}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("admin.payments.table.actions", { default: "Actions" })}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(payment.createdAt).toLocaleDateString()} <br />
-                      <span className="text-xs text-gray-500">
-                        {new Date(payment.createdAt).toLocaleTimeString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className="font-mono text-xs text-gray-600">
-                        {payment.orderId.slice(0, 8)}...
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.order?.customer?.firstName} {payment.order?.customer?.lastName}
-                      <br />
-                      <span className="text-xs text-gray-500">
-                        {payment.order?.customer?.phone}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {formatAmount(payment.amount, payment.currency)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 uppercase">
-                      {payment.gateway}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {payment.paymentMethod || "-"}
-                      {payment.payerIdentifier && (
-                        <>
-                          <br />
-                          <span className="text-xs text-gray-500">{payment.payerIdentifier}</span>
-                        </>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
-                          payment.status
-                        )}`}
-                      >
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => setSelectedPayment(payment)}
-                        className="text-red-600 hover:text-red-800 font-medium"
-                      >
-                        {t("admin.payments.table.viewDetails", { default: "View" })}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          {orders.map((order) => {
+            const latestPayment = order.payments?.[order.payments.length - 1] || {};
+            const gatewayOrderId = latestPayment.gatewayOrderId || "-";
+            const paymentMethod = latestPayment.paymentMethod || "-";
+            return (
+              <div key={order.id} className="card hover:shadow-lg transition-all duration-200">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {order.customer.firstName} {order.customer.lastName}
+                      </h3>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 flex-wrap">
+                        <span>📞 {order.customer.phone}</span>
+                        <span className="opacity-60">•</span>
+                        <span>🕒 {new Date(order.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(order.status)}`}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </div>
+                      <div className="text-lg font-bold text-gray-900 mt-1">
+                        {order.total.toFixed(0)} ₾
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs font-medium text-gray-500 mb-1">Order ID</div>
+                      <div className="font-mono text-sm text-gray-900">{order.id}</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs font-medium text-gray-500 mb-1">Gateway Order ID</div>
+                      <div className="font-mono text-sm text-gray-900">{gatewayOrderId}</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs font-medium text-gray-500 mb-1">Gateway</div>
+                      <div className="text-sm text-gray-900 uppercase">{latestPayment.gateway || "bog"}</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs font-medium text-gray-500 mb-1">Payment Method</div>
+                      <div className="text-sm text-gray-900">{paymentMethod}</div>
+                    </div>
+                  </div>
+
+                  {latestPayment.lastSyncAt && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-xs font-medium text-blue-700">
+                        Last sync: {new Date(latestPayment.lastSyncAt).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-100 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const refundCheck = canRefund(order);
+                        if (refundCheck.allowed) {
+                          return (
+                            <>
+                              <button
+                                onClick={() => openRefundModal(order, false)}
+                                className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+                                title="Full refund"
+                              >
+                                💰 Full Refund
+                              </button>
+                              <button
+                                onClick={() => openRefundModal(order, true)}
+                                className="px-3 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 transition-colors"
+                                title="Partial refund"
+                              >
+                                Partial Refund
+                              </button>
+                            </>
+                          );
+                        } else {
+                          return (
+                            <span className="text-xs text-gray-500" title={refundCheck.reason}>
+                              ⓘ {refundCheck.reason}
+                            </span>
+                          );
+                        }
+                      })()}
+                    </div>
+                    <button
+                      onClick={() => setSelectedOrder(order)}
+                      className="btn-secondary"
+                    >
+                      {t("admin.payments.viewDetails", { default: "View Details" })}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
       {/* Payment Details Modal */}
-      {selectedPayment && (
+      {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
@@ -1176,7 +1341,7 @@ function PaymentsAdmin() {
                 {t("admin.payments.details.title", { default: "Payment Details" })}
               </h3>
               <button
-                onClick={() => setSelectedPayment(null)}
+                onClick={() => setSelectedOrder(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1187,76 +1352,212 @@ function PaymentsAdmin() {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.paymentId", { default: "Payment ID" })}</p>
-                  <p className="font-mono text-sm">{selectedPayment.id}</p>
+                  <p className="text-sm text-gray-500">Order ID</p>
+                  <p className="font-mono text-sm">{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.orderId", { default: "Order ID" })}</p>
-                  <p className="font-mono text-sm">{selectedPayment.orderId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.gateway", { default: "Gateway" })}</p>
-                  <p className="font-medium uppercase">{selectedPayment.gateway}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.status", { default: "Status" })}</p>
-                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(selectedPayment.status)}`}>
-                    {selectedPayment.status}
+                  <p className="text-sm text-gray-500">Status</p>
+                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(selectedOrder.status)}`}>
+                    {selectedOrder.status}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.amount", { default: "Amount" })}</p>
-                  <p className="font-bold text-lg">{formatAmount(selectedPayment.amount, selectedPayment.currency)}</p>
+                  <p className="text-sm text-gray-500">Total</p>
+                  <p className="font-bold text-lg">{selectedOrder.total.toFixed(0)} ₾</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.method", { default: "Payment Method" })}</p>
-                  <p>{selectedPayment.paymentMethod || "-"}</p>
+                  <p className="text-sm text-gray-500">Created</p>
+                  <p className="text-sm">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
                 </div>
-                {selectedPayment.gatewayTransactionId && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">{t("admin.payments.details.transactionId", { default: "Transaction ID" })}</p>
-                    <p className="font-mono text-sm">{selectedPayment.gatewayTransactionId}</p>
-                  </div>
-                )}
-                {selectedPayment.payerIdentifier && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-500">{t("admin.payments.details.payer", { default: "Payer" })}</p>
-                    <p className="font-mono text-sm">{selectedPayment.payerIdentifier}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-500">{t("admin.payments.details.created", { default: "Created" })}</p>
-                  <p className="text-sm">{new Date(selectedPayment.createdAt).toLocaleString()}</p>
-                </div>
-                {selectedPayment.completedAt && (
-                  <div>
-                    <p className="text-sm text-gray-500">{t("admin.payments.details.completed", { default: "Completed" })}</p>
-                    <p className="text-sm">{new Date(selectedPayment.completedAt).toLocaleString()}</p>
-                  </div>
-                )}
               </div>
 
-              {selectedPayment.webhookPayload && (
+              {selectedOrder.payments?.[0]?.gatewayResponse && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    {t("admin.payments.details.webhookData", { default: "Webhook Data" })}
-                  </p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Gateway Response</p>
                   <pre className="bg-gray-50 p-4 rounded-lg text-xs overflow-auto max-h-64">
-                    {JSON.stringify(selectedPayment.webhookPayload, null, 2)}
+                    {JSON.stringify(selectedOrder.payments[0].gatewayResponse, null, 2)}
                   </pre>
                 </div>
               )}
 
-              {selectedPayment.gatewayResponse && (
+              {selectedOrder.payments?.[0]?.webhookPayload && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    {t("admin.payments.details.gatewayResponse", { default: "Gateway Response" })}
-                  </p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Webhook Payload</p>
                   <pre className="bg-gray-50 p-4 rounded-lg text-xs overflow-auto max-h-64">
-                    {JSON.stringify(selectedPayment.gatewayResponse, null, 2)}
+                    {JSON.stringify(selectedOrder.payments[0].webhookPayload, null, 2)}
                   </pre>
                 </div>
               )}
+
+              {selectedOrder.payments?.[0]?.gatewayResponse?.refund && (
+                <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="text-sm font-medium text-purple-900 mb-3">💰 Refund Information</p>
+                  {(() => {
+                    const refund = selectedOrder.payments[0].gatewayResponse.refund;
+                    return (
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">Original Amount:</span>
+                          <span className="font-semibold text-purple-900">{refund.originalAmount?.toFixed(2) || selectedOrder.total.toFixed(2)} ₾</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">Refunded Amount:</span>
+                          <span className="font-semibold text-purple-900">{refund.refundAmount?.toFixed(2) || selectedOrder.total.toFixed(2)} ₾</span>
+                        </div>
+                        {refund.isPartialRefund && refund.remainingAmount > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-orange-700">Remaining Amount:</span>
+                            <span className="font-semibold text-orange-900">{refund.remainingAmount.toFixed(2)} ₾</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between pt-2 border-t border-purple-200">
+                          <span className="text-purple-700">Refunded By:</span>
+                          <span className="font-medium text-purple-900">{refund.refundedBy}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">Refunded At:</span>
+                          <span className="text-purple-900">{new Date(refund.refundedAt).toLocaleString()}</span>
+                        </div>
+                        {refund.manualMode && (
+                          <div className="mt-2 p-2 bg-blue-100 rounded text-blue-800 text-xs">
+                            ⓘ Manual refund - processed via Business Manager
+                          </div>
+                        )}
+                        {refund.refundResult?.action_id && (
+                          <div className="flex justify-between pt-2 border-t border-purple-200">
+                            <span className="text-purple-700">Action ID:</span>
+                            <span className="font-mono text-xs text-purple-900">{refund.refundResult.action_id}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Confirmation Modal */}
+      {refundModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-red-600 to-orange-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <span>⚠️</span>
+                {refundModal.isPartial ? "Partial Refund" : "Full Refund"}
+              </h3>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* Order Info */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Customer:</span>
+                  <span className="text-sm font-medium">
+                    {refundModal.order.customer.firstName} {refundModal.order.customer.lastName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Order Total:</span>
+                  <span className="text-sm font-bold text-gray-900">
+                    {refundModal.order.total.toFixed(2)} ₾
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Order Date:</span>
+                  <span className="text-sm">
+                    {new Date(refundModal.order.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Partial Refund Amount Input */}
+              {refundModal.isPartial && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Refund Amount (₾)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    max={refundModal.order.total}
+                    step="0.01"
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    className="input-field"
+                    placeholder="Enter amount to refund"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum: {refundModal.order.total.toFixed(2)} ₾
+                  </p>
+                </div>
+              )}
+
+              {/* Warning */}
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                <div className="flex gap-2">
+                  <span className="text-yellow-600 font-bold">⚠️</span>
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-semibold mb-1">Important:</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>This action cannot be undone</li>
+                      <li>Funds will be returned to customer's card</li>
+                      <li>Processing may take 3-5 business days</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Confirmation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🔐 Confirm Admin Password
+                </label>
+                <input
+                  type="password"
+                  value={refundPassword}
+                  onChange={(e) => setRefundPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="Enter your admin password"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && refundPassword && (!refundModal.isPartial || refundAmount)) {
+                      handleRefund();
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Your password is required to authorize this refund
+                </p>
+              </div>
+
+              {/* Error Display */}
+              {refundError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">
+                    <span className="font-semibold">Error:</span> {refundError}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={closeRefundModal}
+                  disabled={refunding}
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRefund}
+                  disabled={refunding || !refundPassword || (refundModal.isPartial && !refundAmount)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {refunding ? "Processing..." : `Refund ${refundModal.isPartial ? refundAmount + " ₾" : "Full Amount"}`}
+                </button>
+              </div>
             </div>
           </div>
         </div>

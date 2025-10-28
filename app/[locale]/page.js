@@ -185,8 +185,21 @@ export default function Home() {
   const [year, setYear] = useState(null);
 
   useEffect(() => {
-    fetch("/api/products").then((r) => r.json()).then(setProducts);
-    fetch("/api/settings").then((r) => r.json()).then(setSettings);
+    fetch("/api/products")
+      .then((r) => r.ok ? r.json() : Promise.reject('Products API failed'))
+      .then(setProducts)
+      .catch((err) => {
+        console.error('Failed to load products:', err);
+        setProducts([]);
+      });
+    
+    fetch("/api/settings")
+      .then((r) => r.ok ? r.json() : Promise.reject('Settings API failed'))
+      .then(setSettings)
+      .catch((err) => {
+        console.error('Failed to load settings:', err);
+        setSettings({});
+      });
   }, []);
 
   useEffect(() => {

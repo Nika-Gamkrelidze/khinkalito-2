@@ -9,8 +9,25 @@ export async function GET(request) {
   if (!requireAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  const where = status ? { status } : {};
-  const orders = await prisma.order.findMany({ where, orderBy: { createdAt: "desc" } });
+  
+  // Support comma-separated status values for filtering multiple statuses
+  let where = {};
+  if (status) {
+    if (status.includes(",")) {
+      // Multiple statuses (e.g., "refunded,refunded_partially")
+      const statuses = status.split(",").map(s => s.trim());
+      where = { status: { in: statuses } };
+    } else {
+      // Single status
+      where = { status };
+    }
+  }
+  
+  const orders = await prisma.order.findMany({ 
+    where, 
+    include: { payments: true },
+    orderBy: { createdAt: "desc" } 
+  });
   return NextResponse.json(orders);
 }
 

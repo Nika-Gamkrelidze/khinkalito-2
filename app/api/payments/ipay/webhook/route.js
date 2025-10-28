@@ -160,6 +160,37 @@ export async function POST(request) {
 
   console.log("📋 Processing webhook:", { merchantOrderId, status, payload });
 
+  // Check for refund actions to determine if it's partial or full
+  const actions = data?.actions || [];
+  const refundActions = actions.filter(a => a.action === "refund" || a.action === "refund_request");
+  const hasRefund = refundActions.length > 0;
+  
+  // Calculate total refunded amount if there are refund actions
+  let totalRefundedAmount = 0;
+  let isPartialRefund = false;
+  
+  if (hasRefund) {
+    totalRefundedAmount = refundActions.reduce((sum, action) => {
+      const amount = parseFloat(action.amount || action.refund_amount || 0);
+      return sum + amount;
+    }, 0);
+    
+    // Check if it's a partial refund by comparing with purchase units
+    const requestAmount = parseFloat(data?.purchase_units?.request_amount || data?.purchase_units?.total_amount || 0);
+    const refundAmount = parseFloat(data?.purchase_units?.refund_amount || totalRefundedAmount);
+    
+    if (requestAmount > 0 && refundAmount > 0 && refundAmount < requestAmount) {
+      isPartialRefund = true;
+    }
+    
+    console.log("💰 Refund detected:", { 
+      totalRefundedAmount, 
+      requestAmount, 
+      refundAmount, 
+      isPartial: isPartialRefund 
+    });
+  }
+
   // Map gateway status to local status
   const normalizedStatus = (function mapStatus(s) {
     const v = String(s).toLowerCase();
@@ -180,6 +211,14 @@ export async function POST(request) {
       v === "cancelled" ||
       v.includes("reject")
     ) return "failed";
+    // Check for refunded statuses - BOG sends these explicitly
+    if (v === "refunded_partially" || v.includes("partial") && v.includes("refund")) {
+      return "refunded_partially";
+    }
+    if (v === "refunded" || v.includes("refund") && !v.includes("pending")) {
+      // If BOG sends "refunded", check if it's actually partial based on amounts
+      return isPartialRefund ? "refunded_partially" : "refunded";
+    }
     return "pending";
   })(status);
 
@@ -201,6 +240,9 @@ export async function POST(request) {
     // Find or create the payment record
     let payment = order.payments.find(p => p.gateway === "ipay" && p.status !== "completed");
     
+    // Determine payment status (completed for paid, preserve refunded statuses)
+    const paymentStatus = normalizedStatus === "paid" ? "completed" : normalizedStatus;
+    
     if (!payment) {
       // Create new payment record if none exists
       payment = await prisma.payment.create({
@@ -211,13 +253,18 @@ export async function POST(request) {
           gatewayTransactionId: data?.payment_detail?.transaction_id || null,
           amount: order.total,
           currency: "GEL",
-          status: normalizedStatus === "paid" ? "completed" : normalizedStatus,
-          paymentMethod: data?.payment_detail?.payment_option || null,
+          status: paymentStatus,
+          paymentMethod: data?.payment_detail?.payment_option || data?.payment_detail?.transfer_method?.key || null,
           payerIdentifier: data?.payment_detail?.payer_identifier || null,
           cardType: data?.payment_detail?.card_type || null,
           completedAt: normalizedStatus === "paid" ? new Date() : null,
           webhookReceivedAt: new Date(),
           webhookPayload: payload,
+          metadata: hasRefund ? {
+            refundActions,
+            totalRefundedAmount,
+            isPartialRefund,
+          } : null,
         },
       });
     } else {
@@ -225,14 +272,21 @@ export async function POST(request) {
       payment = await prisma.payment.update({
         where: { id: payment.id },
         data: {
-          status: normalizedStatus === "paid" ? "completed" : normalizedStatus,
+          status: paymentStatus,
           gatewayTransactionId: data?.payment_detail?.transaction_id || payment.gatewayTransactionId,
-          paymentMethod: data?.payment_detail?.payment_option || payment.paymentMethod,
+          paymentMethod: data?.payment_detail?.payment_option || data?.payment_detail?.transfer_method?.key || payment.paymentMethod,
           payerIdentifier: data?.payment_detail?.payer_identifier || payment.payerIdentifier,
           cardType: data?.payment_detail?.card_type || payment.cardType,
           completedAt: normalizedStatus === "paid" ? new Date() : payment.completedAt,
           webhookReceivedAt: new Date(),
           webhookPayload: payload,
+          metadata: hasRefund ? {
+            ...(payment.metadata || {}),
+            refundActions,
+            totalRefundedAmount,
+            isPartialRefund,
+            refundedAt: new Date().toISOString(),
+          } : payment.metadata,
         },
       });
     }

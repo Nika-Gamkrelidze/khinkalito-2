@@ -87,6 +87,9 @@ model Payment {
   webhookReceivedAt  DateTime?
   webhookPayload     Json?
   
+  // Sync tracking
+  lastSyncAt         DateTime?
+  
   // Additional metadata
   metadata           Json?    // Any extra data
   

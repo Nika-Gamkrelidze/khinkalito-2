@@ -74,7 +74,9 @@
 		"back": "Back to Site",
 		"tabs": {
 			"products": "Products",
-			"orders": "Orders"
+			"orders": "Orders",
+			"payments": "Payments",
+			"settings": "Settings"
 		},
 		"create": {
 			"title": "Create New Product",
@@ -134,6 +136,23 @@
 			"noneToday": "No orders have been placed today yet.",
 			"nonePending": "No pending orders at the moment.",
 			"noneAll": "No orders have been placed yet."
+		},
+		"payments": {
+			"title": "Payments",
+			"countLabel": "payments",
+			"filter": {
+				"all": "All",
+				"paid": "Paid",
+				"completed": "Completed",
+				"pending": "Pending",
+				"refunded": "Refunded",
+				"failed": "Failed"
+			},
+			"empty": "No payments found",
+			"viewDetails": "View Details",
+			"details": {
+				"title": "Payment Details"
+			}
 		}
 	}
 }
