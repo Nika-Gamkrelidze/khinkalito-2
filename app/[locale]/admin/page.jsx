@@ -40,6 +40,15 @@ function ArrowLeftIcon(props) {
   );
 }
 
+function CreditCardIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" aria-hidden {...props}>
+      <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+      <path d="M2 10h20" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  );
+}
+
 export default function AdminPage() {
   const locale = useLocale();
   const t = useTranslations();
@@ -232,8 +241,8 @@ export default function AdminPage() {
               className={`w-full justify-between btn-secondary ${mobileTabsOpen ? "ring-2 ring-red-200" : ""}`}
             >
               <span className="flex items-center gap-2">
-                {tab === "products" ? <PackageIcon /> : tab === "orders" ? <ShoppingCartIcon /> : <span>⚙️</span>}
-                {tab === "products" ? t("admin.tabs.products", { default: "Products" }) : tab === "orders" ? t("admin.tabs.orders", { default: "Orders" }) : "Settings"}
+                {tab === "products" ? <PackageIcon /> : tab === "orders" ? <ShoppingCartIcon /> : tab === "payments" ? <CreditCardIcon /> : <span>⚙️</span>}
+                {tab === "products" ? t("admin.tabs.products", { default: "Products" }) : tab === "orders" ? t("admin.tabs.orders", { default: "Orders" }) : tab === "payments" ? t("admin.tabs.payments", { default: "Payments" }) : "Settings"}
               </span>
               <span className="text-gray-500">▾</span>
             </button>
@@ -254,6 +263,13 @@ export default function AdminPage() {
                   >
                     <ShoppingCartIcon />
                     {t("admin.tabs.orders", { default: "Orders" })}
+                  </button>
+                  <button
+                    onClick={() => { setTab("payments"); setMobileTabsOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 ${tab === "payments" ? "bg-red-50 text-red-700" : "hover:bg-gray-50"}`}
+                  >
+                    <CreditCardIcon />
+                    {t("admin.tabs.payments", { default: "Payments" })}
                   </button>
                   <button
                     onClick={() => { setTab("settings"); setMobileTabsOpen(false); }}
@@ -292,6 +308,17 @@ export default function AdminPage() {
               {t("admin.tabs.orders", { default: "Orders" })}
             </button>
             <button 
+              onClick={() => setTab("payments")} 
+              className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl font-medium transition-all duration-200 ${
+                tab === "payments" 
+                  ? "bg-red-600 text-white shadow-lg transform scale-105" 
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <CreditCardIcon />
+              {t("admin.tabs.payments", { default: "Payments" })}
+            </button>
+            <button 
               onClick={() => setTab("settings")} 
               className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-xl font-medium transition-all duration-200 ${
                 tab === "settings" 
@@ -307,7 +334,7 @@ export default function AdminPage() {
 
         {/* Tab Content */}
         <div className="animate-fade-in">
-          {tab === "products" ? <ProductsAdmin /> : tab === "orders" ? <OrdersAdmin /> : <SettingsAdmin />}
+          {tab === "products" ? <ProductsAdmin /> : tab === "orders" ? <OrdersAdmin /> : tab === "payments" ? <PaymentsAdmin /> : <SettingsAdmin />}
         </div>
       </div>
     </div>
@@ -933,6 +960,307 @@ function OrdersAdmin() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function PaymentsAdmin() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const t = useTranslations();
+
+  useEffect(() => {
+    fetchPayments();
+  }, [filter]);
+
+  async function fetchPayments() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filter !== "all") params.append("status", filter);
+      const res = await fetch(`/api/payments?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data.payments || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch payments:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function formatAmount(amount, currency = "GEL") {
+    return `${(amount / 100).toFixed(2)} ${currency}`;
+  }
+
+  function getStatusBadgeClass(status) {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      case "refunded":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Filters */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {t("admin.payments.title", { default: "Payments" })}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "all"
+                ? "bg-red-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {t("admin.payments.filter.all", { default: "All" })}
+          </button>
+          <button
+            onClick={() => setFilter("completed")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "completed"
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {t("admin.payments.filter.completed", { default: "Completed" })}
+          </button>
+          <button
+            onClick={() => setFilter("pending")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "pending"
+                ? "bg-yellow-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {t("admin.payments.filter.pending", { default: "Pending" })}
+          </button>
+          <button
+            onClick={() => setFilter("failed")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              filter === "failed"
+                ? "bg-red-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {t("admin.payments.filter.failed", { default: "Failed" })}
+          </button>
+        </div>
+      </div>
+
+      {/* Payments List */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-red-600"></div>
+        </div>
+      ) : payments.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-xl">
+          <CreditCardIcon className="mx-auto mb-4 text-gray-400" style={{ width: 48, height: 48 }} />
+          <p className="text-gray-600">
+            {t("admin.payments.empty", { default: "No payments found" })}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.date", { default: "Date" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.order", { default: "Order ID" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.customer", { default: "Customer" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.amount", { default: "Amount" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.gateway", { default: "Gateway" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.method", { default: "Method" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.status", { default: "Status" })}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t("admin.payments.table.actions", { default: "Actions" })}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {payments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(payment.createdAt).toLocaleDateString()} <br />
+                      <span className="text-xs text-gray-500">
+                        {new Date(payment.createdAt).toLocaleTimeString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className="font-mono text-xs text-gray-600">
+                        {payment.orderId.slice(0, 8)}...
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.order?.customer?.firstName} {payment.order?.customer?.lastName}
+                      <br />
+                      <span className="text-xs text-gray-500">
+                        {payment.order?.customer?.phone}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      {formatAmount(payment.amount, payment.currency)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 uppercase">
+                      {payment.gateway}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {payment.paymentMethod || "-"}
+                      {payment.payerIdentifier && (
+                        <>
+                          <br />
+                          <span className="text-xs text-gray-500">{payment.payerIdentifier}</span>
+                        </>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                          payment.status
+                        )}`}
+                      >
+                        {payment.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => setSelectedPayment(payment)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        {t("admin.payments.table.viewDetails", { default: "View" })}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Details Modal */}
+      {selectedPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900">
+                {t("admin.payments.details.title", { default: "Payment Details" })}
+              </h3>
+              <button
+                onClick={() => setSelectedPayment(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.paymentId", { default: "Payment ID" })}</p>
+                  <p className="font-mono text-sm">{selectedPayment.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.orderId", { default: "Order ID" })}</p>
+                  <p className="font-mono text-sm">{selectedPayment.orderId}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.gateway", { default: "Gateway" })}</p>
+                  <p className="font-medium uppercase">{selectedPayment.gateway}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.status", { default: "Status" })}</p>
+                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(selectedPayment.status)}`}>
+                    {selectedPayment.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.amount", { default: "Amount" })}</p>
+                  <p className="font-bold text-lg">{formatAmount(selectedPayment.amount, selectedPayment.currency)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.method", { default: "Payment Method" })}</p>
+                  <p>{selectedPayment.paymentMethod || "-"}</p>
+                </div>
+                {selectedPayment.gatewayTransactionId && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500">{t("admin.payments.details.transactionId", { default: "Transaction ID" })}</p>
+                    <p className="font-mono text-sm">{selectedPayment.gatewayTransactionId}</p>
+                  </div>
+                )}
+                {selectedPayment.payerIdentifier && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500">{t("admin.payments.details.payer", { default: "Payer" })}</p>
+                    <p className="font-mono text-sm">{selectedPayment.payerIdentifier}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-500">{t("admin.payments.details.created", { default: "Created" })}</p>
+                  <p className="text-sm">{new Date(selectedPayment.createdAt).toLocaleString()}</p>
+                </div>
+                {selectedPayment.completedAt && (
+                  <div>
+                    <p className="text-sm text-gray-500">{t("admin.payments.details.completed", { default: "Completed" })}</p>
+                    <p className="text-sm">{new Date(selectedPayment.completedAt).toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedPayment.webhookPayload && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    {t("admin.payments.details.webhookData", { default: "Webhook Data" })}
+                  </p>
+                  <pre className="bg-gray-50 p-4 rounded-lg text-xs overflow-auto max-h-64">
+                    {JSON.stringify(selectedPayment.webhookPayload, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {selectedPayment.gatewayResponse && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    {t("admin.payments.details.gatewayResponse", { default: "Gateway Response" })}
+                  </p>
+                  <pre className="bg-gray-50 p-4 rounded-lg text-xs overflow-auto max-h-64">
+                    {JSON.stringify(selectedPayment.gatewayResponse, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

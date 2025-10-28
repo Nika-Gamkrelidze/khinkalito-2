@@ -2,8 +2,8 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(_req, context) {
-  const { params } = await context;
-  const id = params?.id;
+  const { params } = context;
+  const id = await params?.id;
   if (!id) return new NextResponse("Bad Request", { status: 400 });
   const image = await prisma.image.findUnique({ where: { id }, select: { data: true, mimeType: true, filename: true } });
   if (!image) return new NextResponse("Not Found", { status: 404 });

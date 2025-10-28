@@ -112,30 +112,38 @@ export async function POST(request) {
       },
     };
 
+    console.log("📤 Sending payment request to BOG:", {
+      callback_url: payload.callback_url,
+      external_order_id: payload.external_order_id,
+      total_amount: payload.purchase_units.total_amount,
+    });
+
     const gateway = await createIpayOrder(payload, {
       idempotencyKey: randomUUID(),
       acceptLanguage: "en",
     });
 
-    const redirectUrl = gateway?.redirect_url || gateway?._links?.redirect?.href || gateway?.paymentUrl || gateway?.redirectUrl || gateway?.url;
+    console.log("📥 BOG Response:", JSON.stringify(gateway, null, 2));
 
-    // Persist payment request/response metadata
-    await prisma.order.update({
-      where: { id: newOrder.id },
-      data: {
-        payment: {
-          gateway: "bog",
-          createdAt: new Date().toISOString(),
-          request: payload,
-          response: gateway,
-          whatsappSent: false,
-        },
-      },
-    });
+    const redirectUrl = gateway?.redirect_url || gateway?._links?.redirect?.href || gateway?.paymentUrl || gateway?.redirectUrl || gateway?.url;
 
     if (!redirectUrl) {
       return NextResponse.json({ order: newOrder, error: "Payment URL not provided by gateway" }, { status: 502 });
     }
+
+    // Create Payment record
+    await prisma.payment.create({
+      data: {
+        orderId: newOrder.id,
+        gateway: "ipay",
+        gatewayOrderId: gateway?.id || null,
+        amount: newOrder.total,
+        currency: currency,
+        status: "pending",
+        gatewayRequest: payload,
+        gatewayResponse: gateway,
+      },
+    });
 
     return NextResponse.json({ order: newOrder, redirectUrl }, { status: 201 });
   } catch (e) {

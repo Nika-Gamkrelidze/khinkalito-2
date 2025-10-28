@@ -45,14 +45,55 @@ model Setting {
 }
 
 model Order {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
   status    String
   customer  Json
   address   Json
   items     Json
   total     Int
-  payment   Json?
+  payments  Payment[]
+}
+
+model Payment {
+  id                 String   @id @default(uuid())
+  orderId            String
+  order              Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Payment gateway info
+  gateway            String   // "ipay", "bog", etc.
+  gatewayOrderId     String?  // BOG's internal order ID
+  gatewayTransactionId String? // Transaction ID from gateway
+  
+  // Payment details
+  amount             Int      // Amount in minor units (cents)
+  currency           String   @default("GEL")
+  status             String   // "pending", "completed", "failed", "refunded"
+  paymentMethod      String?  // "card", "direct_debit", etc.
+  
+  // Card/payer info (if available)
+  payerIdentifier    String?  // Masked card number or identifier
+  cardType           String?
+  
+  // Timestamps
+  createdAt          DateTime @default(now())
+  completedAt        DateTime?
+  
+  // Gateway request/response
+  gatewayRequest     Json?    // Original request sent to gateway
+  gatewayResponse    Json?    // Response from gateway
+  
+  // Webhook data
+  webhookReceivedAt  DateTime?
+  webhookPayload     Json?
+  
+  // Additional metadata
+  metadata           Json?    // Any extra data
+  
+  @@index([orderId])
+  @@index([status])
+  @@index([gateway])
+  @@index([createdAt])
 }
 
 /// Stores uploaded images as binary with metadata

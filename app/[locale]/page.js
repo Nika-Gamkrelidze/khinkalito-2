@@ -327,10 +327,22 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firstName, lastName, phone, addressText, location, items: cart })
       });
-      const data = await res.json();
+      let data = null;
+      try {
+        if ((res.headers.get("content-type") || "").includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          if (!res.ok) throw new Error(text || "Failed to create order");
+        }
+      } catch (e) {
+        if (!res.ok) throw e;
+      }
       if (!res.ok) throw new Error(data?.error || "Failed to create order");
       if (data?.redirectUrl) {
-        setPaymentUrl(data.redirectUrl);
+        try { if (data?.order?.id) localStorage.setItem("lastOrderId", data.order.id); } catch {}
+        window.location.href = data.redirectUrl;
+        return;
       }
       setCurrentOrderId(data?.order?.id || null);
       const smsText = `${firstName} ${lastName} | ${phone} | ${addressText || "map"} | ` +
@@ -347,7 +359,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50 pt-2">
+    <div suppressHydrationWarning className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50 pt-2">
       {/* Modern Navigation Header */}
       <header className="sticky top-0 z-50 glass-effect border-b border-white/20 shadow-sm py-1 md:py-2">
         <nav className="container mx-auto">
